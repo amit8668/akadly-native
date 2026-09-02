@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Akadly (native)</title>
+  </head>
+  <body>
+    <header>
+      <h1>Akadly <span class="badge">native - Stage 1</span></h1>
+      <div class="controls">
+        <button id="connectBtn">Connect</button>
+        <button id="runBtn" disabled>Run</button>
+      </div>
+    </header>
+    <main>
+      <div id="workspace"></div>
+      <aside>
+        <h2>Generated Python</h2>
+        <pre id="codePreview"></pre>
+        <h2>Output</h2>
+        <pre id="output"></pre>
+      </aside>
+    </main>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>
