@@ -1,0 +1,44 @@
+{
+  "name": "akadly-native-desktop",
+  "version": "1.0.0",
+  "description": "Akadly (native) - fully original block/text MicroPython IDE, desktop edition",
+  "main": "main.js",
+  "author": "Amit Jadhawar",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:all": "electron-builder --win --linux"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.akadly.native.desktop",
+    "productName": "Akadly Native",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "main.js",
+      "picker.html",
+      "picker-preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "app"
+      }
+    ],
+    "icon": "build/icon.png",
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Development"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+name: Build Desktop App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'style/**'
+      - 'public/**'
+      - 'desktop/**'
+      - '.github/workflows/build-desktop.yml'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            artifact: windows-installer
+            glob: desktop/dist-electron/*.exe
+          - os: ubuntu-latest
+            script: dist:linux
+            artifact: linux-installer
+            glob: |
+              desktop/dist-electron/*.AppImage
+              desktop/dist-electron/*.deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install web app dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm install
+
+      - name: Build desktop app
+        working-directory: desktop
+        run: npm run ${{ matrix.script }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.glob }}
