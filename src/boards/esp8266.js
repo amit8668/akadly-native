@@ -1,7 +1,6 @@
-export const esp32 = {
-  id: 'esp32',
-  label: 'ESP32',
-  // Category ids this board's toolbox includes, in display order.
+export const esp8266 = {
+  id: 'esp8266',
+  label: 'ESP8266',
   categories: [
     'gpio',
     'timing',

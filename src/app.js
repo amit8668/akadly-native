@@ -1,16 +1,28 @@
 import '../style/theme.css';
-import { createWorkspace, generatePython } from './blockly-setup.js';
-import { esp32 } from './boards/esp32.js';
+import { createWorkspace, generatePython, setWorkspaceBoard } from './blockly-setup.js';
+import { boards, getBoard } from './boards/index.js';
 import { SerialTransport } from './transport/serial.js';
 
 const workspaceEl = document.getElementById('workspace');
+const boardSelect = document.getElementById('boardSelect');
 const connectBtn = document.getElementById('connectBtn');
 const runBtn = document.getElementById('runBtn');
 const outputEl = document.getElementById('output');
 const codePreviewEl = document.getElementById('codePreview');
 
-const workspace = createWorkspace(workspaceEl, esp32);
+boards.forEach((board) => {
+  const option = document.createElement('option');
+  option.value = board.id;
+  option.textContent = board.label;
+  boardSelect.appendChild(option);
+});
+
+const workspace = createWorkspace(workspaceEl, boards[0]);
 const transport = new SerialTransport();
+
+boardSelect.addEventListener('change', () => {
+  setWorkspaceBoard(workspace, getBoard(boardSelect.value));
+});
 transport.onData = (text) => log(`[raw] ${JSON.stringify(text)}\n`);
 
 function log(text) {

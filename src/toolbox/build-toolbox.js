@@ -83,6 +83,73 @@ const CUSTOM_CATEGORIES = {
       { kind: 'block', type: 'timing_millis' },
     ],
   },
+  sensors: {
+    kind: 'category',
+    name: 'Sensors',
+    colour: '305',
+    contents: [
+      { kind: 'block', type: 'sensor_dht_start' },
+      { kind: 'block', type: 'sensor_dht_measure' },
+      { kind: 'block', type: 'sensor_dht_temperature' },
+      { kind: 'block', type: 'sensor_dht_humidity' },
+    ],
+  },
+  displays: {
+    kind: 'category',
+    name: 'Displays',
+    colour: '285',
+    contents: [
+      { kind: 'block', type: 'display_oled_init' },
+      { kind: 'block', type: 'display_oled_text' },
+      { kind: 'block', type: 'display_oled_show' },
+      { kind: 'block', type: 'display_oled_clear' },
+    ],
+  },
+  network: {
+    kind: 'category',
+    name: 'Network',
+    colour: '20',
+    contents: [
+      { kind: 'block', type: 'network_wifi_connect' },
+      { kind: 'block', type: 'network_wifi_is_connected' },
+      { kind: 'block', type: 'network_wifi_ip' },
+      { kind: 'block', type: 'network_http_get' },
+      { kind: 'block', type: 'network_http_post' },
+    ],
+  },
+  files: {
+    kind: 'category',
+    name: 'Files',
+    colour: '45',
+    contents: [
+      { kind: 'block', type: 'file_open' },
+      { kind: 'block', type: 'file_write_line' },
+      { kind: 'block', type: 'file_read_line' },
+      { kind: 'block', type: 'file_close' },
+    ],
+  },
+  control: {
+    kind: 'category',
+    name: 'Control',
+    colour: '0',
+    contents: [
+      { kind: 'block', type: 'control_try_except' },
+      { kind: 'block', type: 'control_rtc_set' },
+      { kind: 'block', type: 'control_rtc_get' },
+    ],
+  },
+  communication: {
+    kind: 'category',
+    name: 'Communication',
+    colour: '165',
+    contents: [
+      { kind: 'block', type: 'comm_uart_init' },
+      { kind: 'block', type: 'comm_uart_write' },
+      { kind: 'block', type: 'comm_uart_read' },
+      { kind: 'block', type: 'comm_i2c_init' },
+      { kind: 'block', type: 'comm_i2c_scan' },
+    ],
+  },
 };
 
 export function buildToolbox(board) {
