@@ -87,6 +87,8 @@ const panels = {
   files: document.getElementById('panel-files'),
   databoard: document.getElementById('panel-databoard'),
   iot: document.getElementById('panel-iot'),
+  ota: document.getElementById('panel-ota'),
+  terminal: document.getElementById('panel-terminal'),
 };
 
 tabs.forEach((tab) => {

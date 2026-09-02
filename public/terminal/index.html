@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Terminal</title>
+<style>
+  :root {
+    --accent: #b5652f;
+    --accent-dark: #9a5326;
+    --bg: #fefefe;
+    --surface-2: #f2f2f2;
+    --border: #d5d5d5;
+    --text: #222;
+    --text-muted: #888;
+    --danger: #b3261e;
+    --danger-bg: #fbeaea;
+    --danger-border: #f0bcbc;
+    --ok: #1a7f37;
+    --ok-bg: #eaf7ea;
+    --ok-border: #b7e0b7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #e0975a;
+      --accent-dark: #f0ab72;
+      --bg: #171f1a;
+      --surface-2: #1e2822;
+      --border: #2a352e;
+      --text: #ecefe9;
+      --text-muted: #9fab9f;
+      --danger: #ff8a80;
+      --danger-bg: #3a2020;
+      --danger-border: #5c2b2b;
+      --ok: #4cc78a;
+      --ok-bg: #16332390;
+      --ok-border: #235c3f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    padding: 12px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+  }
+  h2 { margin: 0 0 4px 0; color: var(--accent-dark); }
+  .hint { color: var(--text-muted); margin: 0 0 10px 0; }
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 0 0 14px 0;
+    flex: none;
+  }
+  legend { padding: 0 6px; font-weight: bold; color: var(--accent-dark); }
+  label { display: inline-block; min-width: 110px; }
+  input[type=text] {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    width: 340px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .row { margin: 6px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { background: var(--accent-dark); }
+  .muted { color: var(--text-muted); font-size: 11px; }
+  .status { margin: 6px 0; padding: 6px 8px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+  .status.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-border); }
+  .status.err { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+  #termFrame {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #000;
+  }
+  #termPlaceholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h2>Remote Access</h2>
+<p class="hint">A real Linux terminal and/or full graphical desktop on a Raspberry Pi (or any Linux box) &mdash; not
+  the MicroPython REPL. Both need something running on the target machine first; see the setup notes below.</p>
+
+<fieldset>
+  <legend>1. Terminal</legend>
+  <div class="row">
+    <label for="termUrl">Terminal URL</label>
+    <input type="text" id="termUrl" placeholder="http://100.x.x.x:7681">
+  </div>
+  <div class="row">
+    <button id="openBtn">Open Terminal &#8599;</button>
+    <span id="connStatus" class="muted"></span>
+  </div>
+  <p class="muted">The address <code>ttyd</code> is listening on for the target machine.</p>
+</fieldset>
+
+<fieldset>
+  <legend>2. Desktop (VNC)</legend>
+  <div class="row">
+    <label for="vncUrl">Desktop URL</label>
+    <input type="text" id="vncUrl" placeholder="http://100.x.x.x:6080/vnc.html">
+  </div>
+  <div class="row">
+    <button id="openVncBtn">Open Desktop &#8599;</button>
+    <span id="vncStatus" class="muted"></span>
+  </div>
+  <p class="muted">The address a noVNC/websockify bridge is listening on for the target machine (points at
+    <code>vnc.html</code>, not the raw VNC port).</p>
+</fieldset>
+
+<div id="termPlaceholder">
+  Both open in their own browser tab, not embedded here.<br>
+  <span class="muted">Akadly is HTTPS; a home-network terminal or desktop bridge is normally plain HTTP, and browsers
+    silently refuse to embed HTTP content inside an HTTPS page's iframe (mixed-content blocking) &mdash; there's no
+    reliable way around that short of putting a real TLS certificate on the target machine. A new tab has no such
+    restriction, so that's what these buttons do. Strongly recommended either way: put the target machine on the
+    same private network as this browser (e.g. Tailscale) instead of exposing either port to the open internet. See
+    the setup guide for exact steps.</span>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "akadly_terminal_settings";
+
+  function $(id) { return document.getElementById(id); }
+
+  function loadSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveSettings(patch) {
+    var merged = Object.assign(loadSettings(), patch);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+  }
+
+  var settings = loadSettings();
+  $("termUrl").value = settings.termUrl || "";
+  $("vncUrl").value = settings.vncUrl || "";
+
+  function setStatus(text, kind) {
+    var el = $("connStatus");
+    el.textContent = text;
+    el.className = "status" + (kind ? " " + kind : "") + " muted";
+  }
+
+  function setVncStatus(text, kind) {
+    var el = $("vncStatus");
+    el.textContent = text;
+    el.className = "status" + (kind ? " " + kind : "") + " muted";
+  }
+
+  function url() {
+    return $("termUrl").value.trim().replace(/\/+$/, "");
+  }
+
+  function vncUrl() {
+    return $("vncUrl").value.trim().replace(/\/+$/, "");
+  }
+
+  function openTerminal() {
+    var u = url();
+    if (!u) {
+      setStatus("enter a terminal URL first", "err");
+      return;
+    }
+    if (!/^https?:\/\//.test(u)) {
+      setStatus("URL must start with http:// or https://", "err");
+      return;
+    }
+    saveSettings({ termUrl: u });
+    setStatus("opened " + u + " in a new tab", "ok");
+    window.open(u, "_blank", "noopener");
+  }
+
+  function openVnc() {
+    var u = vncUrl();
+    if (!u) {
+      setVncStatus("enter a desktop URL first", "err");
+      return;
+    }
+    if (!/^https?:\/\//.test(u)) {
+      setVncStatus("URL must start with http:// or https://", "err");
+      return;
+    }
+    saveSettings({ vncUrl: u });
+    setVncStatus("opened " + u + " in a new tab", "ok");
+    window.open(u, "_blank", "noopener");
+  }
+
+  $("openBtn").addEventListener("click", openTerminal);
+  $("openVncBtn").addEventListener("click", openVnc);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OTA Deploy</title>
+<style>
+  :root {
+    --accent: #b5652f;
+    --accent-dark: #9a5326;
+    --bg: #fefefe;
+    --surface-2: #f2f2f2;
+    --border: #d5d5d5;
+    --text: #222;
+    --text-muted: #888;
+    --danger: #b3261e;
+    --danger-bg: #fbeaea;
+    --danger-border: #f0bcbc;
+    --ok: #1a7f37;
+    --ok-bg: #eaf7ea;
+    --ok-border: #b7e0b7;
+    --info: #205;
+    --info-bg: #eef6f8;
+    --info-border: #cfe6ea;
+    --token-bg: #fff8e1;
+    --token-border: #e0c060;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #e0975a;
+      --accent-dark: #f0ab72;
+      --bg: #171f1a;
+      --surface-2: #1e2822;
+      --border: #2a352e;
+      --text: #ecefe9;
+      --text-muted: #9fab9f;
+      --danger: #ff8a80;
+      --danger-bg: #3a2020;
+      --danger-border: #5c2b2b;
+      --ok: #4cc78a;
+      --ok-bg: #16332390;
+      --ok-border: #235c3f;
+      --info: #7fd0e0;
+      --info-bg: #17323690;
+      --info-border: #2a4d52;
+      --token-bg: #3a2f16;
+      --token-border: #7a5f20;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 12px 16px 40px 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  h2 { margin: 0 0 4px 0; color: var(--accent-dark); }
+  h3 { margin: 18px 0 6px 0; border-bottom: 1px solid var(--border); padding-bottom: 4px; color: var(--text); }
+  .hint { color: var(--text-muted); margin: 0 0 10px 0; }
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 0 0 14px 0;
+  }
+  legend { padding: 0 6px; font-weight: bold; color: var(--accent-dark); }
+  label { display: inline-block; min-width: 110px; }
+  input[type=text], input[type=password], input[type=number], select, textarea {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    width: 260px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .row { margin: 6px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { background: var(--accent-dark); }
+  button.secondary { background: var(--text-muted); }
+  button.secondary:hover { background: var(--accent-dark); }
+  button:disabled { background: #bbb; cursor: default; }
+  table { border-collapse: collapse; width: 100%; margin-top: 6px; color: var(--text); }
+  th, td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; font-size: 12px; }
+  th { background: var(--surface-2); }
+  .status { margin: 6px 0; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+  .status.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-border); }
+  .status.err { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+  .status.info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border); }
+  .token-box {
+    background: var(--token-bg); border: 1px solid var(--token-border); border-radius: 4px;
+    padding: 8px; margin-top: 6px; font-family: monospace; font-size: 12px; word-break: break-all;
+    color: var(--text);
+  }
+  .muted { color: var(--text-muted); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h2>OTA Deploy</h2>
+<p class="hint">Publish releases to devices on any network via your OTA server &mdash; no port forwarding or direct
+  connection to the ESP32 needed. The device picks up new versions on its own next check-in.</p>
+
+<fieldset>
+  <legend>1. Server connection</legend>
+  <div class="row">
+    <label for="serverUrl">Server URL</label>
+    <input type="text" id="serverUrl" placeholder="http://127.0.0.1:8000">
+  </div>
+  <div class="row">
+    <label for="adminKey">Admin key</label>
+    <input type="password" id="adminKey" placeholder="admin key">
+    <button class="secondary" id="toggleKeyBtn" type="button">Show</button>
+  </div>
+  <div class="row">
+    <button id="saveSettingsBtn">Save &amp; Test Connection</button>
+    <span id="connStatus" class="muted">not connected</span>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Devices</legend>
+  <div class="row">
+    <button id="refreshDevicesBtn">Refresh device list</button>
+  </div>
+  <div id="devicesTableWrap"></div>
+
+  <h3 style="border:none; margin-top:14px;">Register a new device</h3>
+  <div class="row">
+    <label for="newDeviceId">Device ID</label>
+    <input type="text" id="newDeviceId" placeholder="ESP32-002">
+  </div>
+  <div class="row">
+    <label for="newDeviceName">Name</label>
+    <input type="text" id="newDeviceName" placeholder="optional label">
+  </div>
+  <div class="row">
+    <button id="registerDeviceBtn">Register device</button>
+  </div>
+  <div id="registerResult"></div>
+</fieldset>
+
+<fieldset>
+  <legend>3. Publish a release</legend>
+  <div class="row">
+    <label for="pubVersion">Version</label>
+    <input type="text" id="pubVersion" placeholder="1.1.0">
+  </div>
+  <div class="row">
+    <label for="pubTarget">Target</label>
+    <select id="pubTarget">
+      <option value="" disabled selected>select a device...</option>
+    </select>
+  </div>
+  <div class="row">
+    <label for="pubNotes">Notes</label>
+    <input type="text" id="pubNotes" placeholder="optional">
+  </div>
+  <div class="row">
+    <label for="pubFiles">Files</label>
+    <input type="file" id="pubFiles" multiple>
+  </div>
+  <p class="muted">Tip: use Akadly's Files tab to save your current program as <code>app.py</code> first, then select
+    it here. Only <code>app.py</code> is normally published &mdash; see the OTA system README for why.</p>
+  <div class="row">
+    <button id="publishBtn">Publish release</button>
+  </div>
+  <div id="publishResult"></div>
+</fieldset>
+
+<fieldset>
+  <legend>4. Release history</legend>
+  <div class="row">
+    <button id="refreshReleasesBtn">Refresh releases</button>
+  </div>
+  <div id="releasesTableWrap"></div>
+</fieldset>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "bipes_ota_settings";
+
+  function $(id) { return document.getElementById(id); }
+
+  function loadSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveSettings(s) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }
+
+  var settings = loadSettings();
+  $("serverUrl").value = settings.serverUrl || "https://server-wine-nu-97.vercel.app";
+  $("adminKey").value = settings.adminKey || "";
+
+  $("toggleKeyBtn").addEventListener("click", function () {
+    var field = $("adminKey");
+    var show = field.type === "password";
+    field.type = show ? "text" : "password";
+    this.textContent = show ? "Hide" : "Show";
+  });
+
+  function serverUrl() { return $("serverUrl").value.replace(/\/+$/, ""); }
+  function adminKey() { return $("adminKey").value; }
+
+  function setStatus(el, text, kind) {
+    el.textContent = text;
+    el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function api(path, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    options.headers["Authorization"] = "Bearer " + adminKey();
+    return fetch(serverUrl() + path, options).then(function (resp) {
+      return resp.text().then(function (text) {
+        var body = null;
+        try { body = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
+        if (!resp.ok) {
+          var detail = (body && body.detail) ? body.detail : (text || resp.statusText);
+          var err = new Error(resp.status + ": " + detail);
+          err.status = resp.status;
+          throw err;
+        }
+        return body;
+      });
+    });
+  }
+
+  // ---- 1. Connection ----------------------------------------------------
+
+  function testConnection() {
+    var connStatus = $("connStatus");
+    connStatus.textContent = "checking...";
+    fetch(serverUrl() + "/healthz").then(function (resp) {
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      return resp.json();
+    }).then(function () {
+      connStatus.textContent = "connected to " + serverUrl();
+      connStatus.style.color = "var(--ok)";
+      refreshDevices();
+      refreshReleases();
+    }).catch(function (e) {
+      connStatus.textContent = "cannot reach server: " + e.message;
+      connStatus.style.color = "var(--danger)";
+    });
+  }
+
+  $("saveSettingsBtn").addEventListener("click", function () {
+    saveSettings({ serverUrl: serverUrl(), adminKey: adminKey() });
+    testConnection();
+  });
+
+  // Public API for the parent BiPES page (the Blocks tab's "Publish to
+  // OTA" modal): fetch the device list using whatever server/admin key is
+  // already configured here, without needing this tab to be visible.
+  window.fetchDeviceListForExternalUse = function () {
+    return api("/api/admin/devices");
+  };
+
+  // ---- 2. Devices ---------------------------------------------------------
+
+  function renderDevicesTable(devices) {
+    var wrap = $("devicesTableWrap");
+    if (!devices || devices.length === 0) {
+      wrap.innerHTML = '<p class="muted">No devices registered yet.</p>';
+    } else {
+      var rows = devices.map(function (d) {
+        return "<tr>" +
+          "<td>" + escapeHtml(d.device_id) + "</td>" +
+          "<td>" + escapeHtml(d.name || "") + "</td>" +
+          "<td>" + escapeHtml(d.current_version || "-") + "</td>" +
+          "<td>" + escapeHtml(d.last_seen || "never") + "</td>" +
+          "<td>" + (d.revoked ? "REVOKED" : "active") + "</td>" +
+          "</tr>";
+      }).join("");
+      wrap.innerHTML = "<table><tr><th>Device ID</th><th>Name</th><th>Version</th><th>Last seen</th><th>Status</th></tr>" + rows + "</table>";
+    }
+
+    // "all devices" intentionally isn't offered: a device with any release
+    // targeted at it by name always ignores "all" ones regardless of
+    // version number -- a repeated silent-no-op trap in practice.
+    var select = $("pubTarget");
+    var current = select.value;
+    select.innerHTML = '<option value="" disabled selected>select a device...</option>';
+    (devices || []).forEach(function (d) {
+      var opt = document.createElement("option");
+      opt.value = d.device_id;
+      opt.textContent = d.device_id + (d.name ? " (" + d.name + ")" : "");
+      select.appendChild(opt);
+    });
+    if ([...select.options].some(function (o) { return o.value === current; })) {
+      select.value = current;
+    } else if (devices && devices.length === 1) {
+      select.value = devices[0].device_id;
+    }
+  }
+
+  function refreshDevices() {
+    api("/api/admin/devices").then(renderDevicesTable).catch(function (e) {
+      $("devicesTableWrap").innerHTML = '<p class="status err">' + escapeHtml(e.message) + '</p>';
+    });
+  }
+  $("refreshDevicesBtn").addEventListener("click", refreshDevices);
+
+  $("registerDeviceBtn").addEventListener("click", function () {
+    var id = $("newDeviceId").value.trim();
+    var name = $("newDeviceName").value.trim();
+    var resultEl = $("registerResult");
+    if (!id) {
+      setStatus(resultEl, "Device ID is required.", "err");
+      return;
+    }
+    api("/api/device/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device_id: id, name: name })
+    }).then(function (body) {
+      resultEl.innerHTML =
+        '<div class="status ok">Registered ' + escapeHtml(body.device_id) + '</div>' +
+        '<div class="token-box"><b>Token (shown once, copy now):</b><br>' + escapeHtml(body.token) + '</div>' +
+        '<p class="muted">Paste into esp32/config.py:<br>' +
+        'DEVICE_ID = "' + escapeHtml(body.device_id) + '"<br>' +
+        'DEVICE_TOKEN = "' + escapeHtml(body.token) + '"<br>' +
+        'OTA_SERVER_URL = "' + escapeHtml(serverUrl()) + '"</p>';
+      $("newDeviceId").value = "";
+      $("newDeviceName").value = "";
+      refreshDevices();
+    }).catch(function (e) {
+      setStatus(resultEl, e.message, "err");
+    });
+  });
+
+  // ---- 3. Publish -----------------------------------------------------
+
+  var PROTECTED_FILENAMES = ["boot.py", "main.py", "ota.py", "ota_http.py", "config.py", "version.py"];
+
+  // Shared by the file-picker publish button below and by publishFile(),
+  // exposed on window so the parent page (Blocks tab's "Publish to OTA"
+  // button) can call straight into this iframe without duplicating any of
+  // this logic. `files` is anything FormData.append("files", ...) accepts
+  // per-entry: a real File (has .name) or a [blob, filename] pair.
+  function doPublish(files, version, target, notes) {
+    for (var p = 0; p < files.length; p++) {
+      var name = files[p].name || files[p][1];
+      if (PROTECTED_FILENAMES.indexOf(name) !== -1) {
+        return Promise.reject(new Error(
+          "'" + name + "' is a harness file and can't be published over OTA " +
+          "(it would risk bricking the update mechanism itself). Only app.py, and any " +
+          "additional application modules you add, should be OTA-managed."
+        ));
+      }
+    }
+
+    var form = new FormData();
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].name) {
+        form.append("files", files[i], files[i].name);
+      } else {
+        form.append("files", files[i][0], files[i][1]);
+      }
+    }
+
+    var qs = "?version=" + encodeURIComponent(version) +
+      "&target=" + encodeURIComponent(target) +
+      "&notes=" + encodeURIComponent(notes || "");
+
+    return api("/api/releases" + qs, { method: "POST", body: form });
+  }
+
+  // Public API for the parent BiPES page: publish a single generated code
+  // string as `filename` (normally "app.py"). Returns a Promise.
+  window.publishFile = function (filename, content, version, target, notes) {
+    var blob = new Blob([content], { type: "text/x-python" });
+    return doPublish([[blob, filename]], version, target, notes);
+  };
+
+  $("publishBtn").addEventListener("click", function () {
+    var version = $("pubVersion").value.trim();
+    var target = $("pubTarget").value;
+    var notes = $("pubNotes").value.trim();
+    var files = $("pubFiles").files;
+    var resultEl = $("publishResult");
+
+    if (!version) { setStatus(resultEl, "Version is required.", "err"); return; }
+    if (!target) { setStatus(resultEl, "Select a target device.", "err"); return; }
+    if (!files || files.length === 0) { setStatus(resultEl, "Select at least one file.", "err"); return; }
+
+    setStatus(resultEl, "Publishing...", "info");
+
+    doPublish(files, version, target, notes).then(function (body) {
+      var fileLines = body.files.map(function (f) {
+        return f.filename + "  (" + f.size + " bytes)  sha256=" + f.sha256;
+      }).join("\n");
+      setStatus(resultEl,
+        "Published release id=" + body.id + " version=" + body.version + " target=" + body.target + "\n" + fileLines,
+        "ok");
+      refreshReleases();
+    }).catch(function (e) {
+      setStatus(resultEl, e.message, "err");
+    });
+  });
+
+  // ---- 4. Releases --------------------------------------------------------
+
+  function refreshReleases() {
+    api("/api/releases").then(function (releases) {
+      var wrap = $("releasesTableWrap");
+      if (!releases || releases.length === 0) {
+        wrap.innerHTML = '<p class="muted">No releases published yet.</p>';
+        return;
+      }
+      var rows = releases.map(function (r) {
+        var files = r.files.map(function (f) { return f.filename; }).join(", ");
+        return "<tr>" +
+          "<td>" + escapeHtml(r.version) + "</td>" +
+          "<td>" + escapeHtml(r.target) + "</td>" +
+          "<td>" + escapeHtml(files) + "</td>" +
+          "<td>" + escapeHtml(r.notes || "") + "</td>" +
+          "<td>" + escapeHtml(r.created_at) + "</td>" +
+          "</tr>";
+      }).join("");
+      wrap.innerHTML = "<table><tr><th>Version</th><th>Target</th><th>Files</th><th>Notes</th><th>Published</th></tr>" + rows + "</table>";
+    }).catch(function (e) {
+      $("releasesTableWrap").innerHTML = '<p class="status err">' + escapeHtml(e.message) + '</p>';
+    });
+  }
+  $("refreshReleasesBtn").addEventListener("click", refreshReleases);
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // Auto-connect on load if we already have saved settings.
+  if (settings.serverUrl && settings.adminKey) {
+    testConnection();
+  }
+})();
+</script>
+
+</body>
+</html>

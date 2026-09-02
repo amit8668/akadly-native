@@ -7,7 +7,7 @@
   </head>
   <body>
     <header>
-      <h1>Akadly <span class="badge">native - Stage 3</span></h1>
+      <h1>Akadly <span class="badge">native - Stage 4</span></h1>
       <div class="controls">
         <select id="boardSelect"></select>
         <button id="connectBtn">Connect</button>
@@ -20,6 +20,8 @@
       <button class="tab" data-tab="files">Files</button>
       <button class="tab" data-tab="databoard">Databoard</button>
       <button class="tab" data-tab="iot">IOT</button>
+      <button class="tab" data-tab="ota">OTA</button>
+      <button class="tab" data-tab="terminal">Remote Access</button>
     </nav>
     <main>
       <section class="panel active" id="panel-blocks">
@@ -40,6 +42,12 @@
       </section>
       <section class="panel" id="panel-iot">
         <div id="iotGrid" class="iot-grid"></div>
+      </section>
+      <section class="panel" id="panel-ota">
+        <iframe src="/ota/index.html" title="OTA Deploy"></iframe>
+      </section>
+      <section class="panel" id="panel-terminal">
+        <iframe src="/terminal/index.html" title="Remote Access"></iframe>
       </section>
     </main>
     <script type="module" src="/src/app.js"></script>
