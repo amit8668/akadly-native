@@ -1,4 +1,5 @@
 import '../style/theme.css';
+import './theme-toggle.js';
 import '@xterm/xterm/css/xterm.css';
 import { createWorkspace, generatePython, setWorkspaceBoard } from './blockly-setup.js';
 import { boards, getBoard } from './boards/index.js';
