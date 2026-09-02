@@ -7,21 +7,40 @@
   </head>
   <body>
     <header>
-      <h1>Akadly <span class="badge">native - Stage 2</span></h1>
+      <h1>Akadly <span class="badge">native - Stage 3</span></h1>
       <div class="controls">
         <select id="boardSelect"></select>
         <button id="connectBtn">Connect</button>
         <button id="runBtn" disabled>Run</button>
       </div>
     </header>
+    <nav class="tabbar">
+      <button class="tab active" data-tab="blocks">Blocks</button>
+      <button class="tab" data-tab="console">Console</button>
+      <button class="tab" data-tab="files">Files</button>
+      <button class="tab" data-tab="databoard">Databoard</button>
+      <button class="tab" data-tab="iot">IOT</button>
+    </nav>
     <main>
-      <div id="workspace"></div>
-      <aside>
-        <h2>Generated Python</h2>
-        <pre id="codePreview"></pre>
-        <h2>Output</h2>
-        <pre id="output"></pre>
-      </aside>
+      <section class="panel active" id="panel-blocks">
+        <div id="workspace"></div>
+        <aside>
+          <h2>Generated Python</h2>
+          <pre id="codePreview"></pre>
+          <h2>Output</h2>
+          <pre id="output"></pre>
+        </aside>
+      </section>
+      <section class="panel" id="panel-console">
+        <div id="terminal"></div>
+      </section>
+      <section class="panel" id="panel-files"></section>
+      <section class="panel" id="panel-databoard">
+        <canvas id="databoardCanvas"></canvas>
+      </section>
+      <section class="panel" id="panel-iot">
+        <div id="iotGrid" class="iot-grid"></div>
+      </section>
     </main>
     <script type="module" src="/src/app.js"></script>
   </body>

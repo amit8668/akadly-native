@@ -10,5 +10,6 @@ export const esp8266 = {
     'files',
     'control',
     'communication',
+    'databoard',
   ],
 };

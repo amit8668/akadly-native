@@ -21,7 +21,15 @@ export class SerialTransport {
     this.writer = null;
     this.readableClosed = null;
     this.connected = false;
-    this.onData = null; // optional live-data callback for the console panel
+    this._dataListeners = [];
+  }
+
+  /** Subscribe to every raw chunk read from the device. Returns an unsubscribe function. */
+  addDataListener(fn) {
+    this._dataListeners.push(fn);
+    return () => {
+      this._dataListeners = this._dataListeners.filter((f) => f !== fn);
+    };
   }
 
   get isConnected() {
@@ -82,7 +90,7 @@ export class SerialTransport {
           if (done) break;
           const text = decoder.decode(value, { stream: true });
           this._buffer += text;
-          if (this.onData) this.onData(text);
+          this._dataListeners.forEach((fn) => fn(text));
           this._flushWaiters();
         }
       } catch (_) {
@@ -166,5 +174,40 @@ export class SerialTransport {
     await this._write(CTRL_B); // back to friendly REPL
 
     return { stdout, stderr };
+  }
+
+  /** List filenames on the device filesystem. */
+  async listFiles() {
+    const { stdout, stderr } = await this.runCode('import os\nprint(os.listdir())');
+    if (stderr) throw new Error(stderr);
+    // stdout is a Python list repr, e.g. "['a.py', 'main.py']\r\n" - close
+    // enough to JSON after normalizing quotes for typical filenames.
+    const jsonish = stdout.trim().replace(/'/g, '"');
+    return JSON.parse(jsonish);
+  }
+
+  /** Read a text file's full contents from the device. */
+  async readFile(filename) {
+    const code = `f = open(${JSON.stringify(filename)}, 'r')\nprint(f.read())\nf.close()`;
+    const { stdout, stderr } = await this.runCode(code);
+    if (stderr) throw new Error(stderr);
+    return stdout;
+  }
+
+  /** Write text content to a file on the device (overwrites). */
+  async writeFile(filename, content) {
+    const code =
+      `f = open(${JSON.stringify(filename)}, 'w')\n` +
+      `f.write(${JSON.stringify(content)})\n` +
+      `f.close()`;
+    const { stderr } = await this.runCode(code);
+    if (stderr) throw new Error(stderr);
+  }
+
+  /** Delete a file from the device filesystem. */
+  async deleteFile(filename) {
+    const code = `import os\nos.remove(${JSON.stringify(filename)})`;
+    const { stderr } = await this.runCode(code);
+    if (stderr) throw new Error(stderr);
   }
 }

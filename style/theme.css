@@ -67,15 +67,180 @@ header .controls button:disabled {
   cursor: not-allowed;
 }
 
+.tabbar {
+  display: flex;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: #999;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
 main {
   flex: 1;
-  display: flex;
   min-height: 0;
+  position: relative;
+}
+
+.panel {
+  display: none;
+  height: 100%;
+}
+
+.panel.active {
+  display: flex;
+}
+
+#panel-blocks {
+  flex: 1;
 }
 
 #workspace {
   flex: 2;
   height: 100%;
+}
+
+#panel-console,
+#panel-databoard {
+  padding: 10px;
+}
+
+#terminal {
+  width: 100%;
+  height: 100%;
+}
+
+#databoardCanvas {
+  width: 100%;
+  height: 100%;
+  background: #0b0e0c;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+#panel-files {
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+  overflow: auto;
+}
+
+.files-toolbar button {
+  background: var(--accent);
+  color: #101512;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.files-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.files-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.files-list li span {
+  flex: 1;
+}
+
+.files-list li button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.files-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 500px;
+}
+
+.files-editor input,
+.files-editor textarea {
+  background: #0b0e0c;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  font-family: monospace;
+}
+
+.files-editor button {
+  align-self: flex-start;
+  background: var(--accent);
+  color: #101512;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.files-status {
+  color: #888;
+}
+
+#panel-iot {
+  padding: 14px;
+  overflow: auto;
+}
+
+.iot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-content: flex-start;
+}
+
+.iot-tile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+}
+
+.iot-tile-name {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.iot-tile-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.iot-hint {
+  color: #888;
 }
 
 aside {

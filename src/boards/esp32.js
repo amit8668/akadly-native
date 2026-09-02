@@ -11,5 +11,6 @@ export const esp32 = {
     'files',
     'control',
     'communication',
+    'databoard',
   ],
 };
