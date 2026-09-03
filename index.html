@@ -31,6 +31,8 @@
     </header>
     <nav class="tabbar">
       <button class="tab active" data-tab="blocks">Blocks</button>
+      <button class="tab" data-tab="console">Console</button>
+      <button class="tab" data-tab="files">Files</button>
       <button class="tab" data-tab="device">Device</button>
       <button class="tab" data-tab="ota">OTA</button>
       <button class="tab" data-tab="terminal">Remote Access</button>
@@ -45,6 +47,10 @@
           <pre id="output"></pre>
         </aside>
       </section>
+      <section class="panel" id="panel-console">
+        <div id="terminal"></div>
+      </section>
+      <section class="panel" id="panel-files"></section>
       <section class="panel" id="panel-device"></section>
       <section class="panel" id="panel-ota">
         <iframe src="/ota/index.html" title="OTA Deploy"></iframe>
