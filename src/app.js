@@ -1,14 +1,9 @@
 import '../style/theme.css';
 import './theme-toggle.js';
-import '@xterm/xterm/css/xterm.css';
 import { createWorkspace, generatePython, setWorkspaceBoard } from './blockly-setup.js';
 import { boards, getBoard } from './boards/index.js';
 import { SerialTransport } from './transport/serial.js';
-import { DataBus } from './panels/data-bus.js';
-import { createConsolePanel } from './panels/console.js';
-import { createFilesPanel } from './panels/files.js';
-import { createDataboardPanel } from './panels/databoard.js';
-import { createIotDashboardPanel } from './panels/iot-dashboard.js';
+import { createDevicePanel } from './panels/device.js';
 
 const workspaceEl = document.getElementById('workspace');
 const boardSelect = document.getElementById('boardSelect');
@@ -26,10 +21,13 @@ boards.forEach((board) => {
 
 const workspace = createWorkspace(workspaceEl, boards[0]);
 const transport = new SerialTransport();
-const dataBus = new DataBus();
+const devicePanel = createDevicePanel(document.getElementById('panel-device'));
+devicePanel.setBoard(boards[0]);
 
 boardSelect.addEventListener('change', () => {
-  setWorkspaceBoard(workspace, getBoard(boardSelect.value));
+  const board = getBoard(boardSelect.value);
+  setWorkspaceBoard(workspace, board);
+  devicePanel.setBoard(board);
 });
 
 function log(text) {
@@ -44,10 +42,6 @@ function updateCodePreview() {
 workspace.addChangeListener(() => updateCodePreview());
 updateCodePreview();
 
-// Every raw byte from the device feeds the Databoard/IOT data bus,
-// regardless of which tab is active or how the program was started.
-transport.addDataListener((text) => dataBus.feed(text));
-
 connectBtn.addEventListener('click', async () => {
   if (transport.isConnected) {
     await transport.disconnect();
@@ -61,7 +55,6 @@ connectBtn.addEventListener('click', async () => {
     connectBtn.textContent = 'Disconnect';
     runBtn.disabled = false;
     log('[connected]\n');
-    filesPanel.refresh();
   } catch (err) {
     log(`\n[connect failed] ${err.message}\n`);
   }
@@ -84,10 +77,7 @@ runBtn.addEventListener('click', async () => {
 const tabs = document.querySelectorAll('.tab');
 const panels = {
   blocks: document.getElementById('panel-blocks'),
-  console: document.getElementById('panel-console'),
-  files: document.getElementById('panel-files'),
-  databoard: document.getElementById('panel-databoard'),
-  iot: document.getElementById('panel-iot'),
+  device: document.getElementById('panel-device'),
   ota: document.getElementById('panel-ota'),
   terminal: document.getElementById('panel-terminal'),
 };
@@ -98,13 +88,5 @@ tabs.forEach((tab) => {
     tab.classList.add('active');
     Object.values(panels).forEach((p) => p.classList.remove('active'));
     panels[tab.dataset.tab].classList.add('active');
-    if (tab.dataset.tab === 'databoard') databoardPanel.resize();
   });
 });
-
-// --- Other panels -------------------------------------------------------
-
-createConsolePanel(document.getElementById('terminal'), transport);
-const filesPanel = createFilesPanel(panels.files, transport);
-const databoardPanel = createDataboardPanel(document.getElementById('databoardCanvas'), dataBus);
-createIotDashboardPanel(document.getElementById('iotGrid'), dataBus);

@@ -229,145 +229,29 @@ main {
   height: 100%;
 }
 
-#panel-console,
-#panel-databoard {
-  padding: 10px;
+#panel-device {
+  padding: 24px;
 }
 
-#terminal {
-  width: 100%;
-  height: 100%;
-}
-
-#databoardCanvas {
-  width: 100%;
-  height: 100%;
+.device-card {
+  max-width: 520px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 10px;
+  padding: 20px 24px;
 }
 
-#panel-files {
-  flex-direction: column;
-  padding: 14px;
-  gap: 10px;
-  overflow: auto;
-}
-
-.files-toolbar button {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-weight: 700;
-  font-family: var(--sans);
-  cursor: pointer;
-}
-
-.files-list {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
-}
-
-.files-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--mono);
-  font-size: 13px;
-}
-
-.files-list li span {
-  flex: 1;
-}
-
-.files-list li button {
-  background: var(--surface-2);
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-family: var(--sans);
-}
-
-.files-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 500px;
-}
-
-.files-editor input,
-.files-editor textarea {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  padding: 8px;
-  font-family: var(--mono);
-}
-
-.files-editor button {
-  align-self: flex-start;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
-  font-weight: 700;
-  font-family: var(--sans);
-  cursor: pointer;
-}
-
-.files-status {
-  color: var(--text-3);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-#panel-iot {
-  padding: 14px;
-  overflow: auto;
-}
-
-.iot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  width: 100%;
-  align-content: flex-start;
-}
-
-.iot-tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  text-align: center;
-}
-
-.iot-tile-name {
-  font-size: 12px;
-  color: var(--text-3);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.iot-tile-value {
-  font-size: 28px;
+.device-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
   font-weight: 800;
-  color: var(--accent);
-  margin-top: 4px;
-  font-family: var(--mono);
+  color: var(--text);
 }
 
-.iot-hint {
-  color: var(--text-3);
+.device-card p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: 1.5;
 }
 
 #panel-ota,

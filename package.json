@@ -12,7 +12,6 @@
     "vite": "^8.2.2"
   },
   "dependencies": {
-    "@xterm/xterm": "^6.0.0",
     "blockly": "^13.2.1"
   }
 }

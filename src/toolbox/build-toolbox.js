@@ -150,12 +150,6 @@ const CUSTOM_CATEGORIES = {
       { kind: 'block', type: 'comm_i2c_scan' },
     ],
   },
-  databoard: {
-    kind: 'category',
-    name: 'Databoard',
-    colour: '140',
-    contents: [{ kind: 'block', type: 'databoard_plot' }],
-  },
 };
 
 export function buildToolbox(board) {

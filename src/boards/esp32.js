@@ -1,6 +1,10 @@
 export const esp32 = {
   id: 'esp32',
   label: 'ESP32',
+  description:
+    'A dual-core WiFi + Bluetooth microcontroller with plenty of GPIO, ' +
+    'analog inputs, and PWM channels. A solid default choice for most ' +
+    'MicroPython projects that need networking.',
   // Category ids this board's toolbox includes, in display order.
   categories: [
     'gpio',
@@ -11,6 +15,5 @@ export const esp32 = {
     'files',
     'control',
     'communication',
-    'databoard',
   ],
 };
