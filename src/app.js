@@ -99,5 +99,5 @@ tabs.forEach((tab) => {
 
 // --- Console / Files panels ---------------------------------------------
 
-createConsolePanel(document.getElementById('terminal'), transport);
+createConsolePanel(panels.console, transport);
 const filesPanel = createFilesPanel(panels.files, transport);

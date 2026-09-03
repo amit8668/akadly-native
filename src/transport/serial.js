@@ -137,6 +137,22 @@ export class SerialTransport {
     await this.writer.write(new TextEncoder().encode(str));
   }
 
+  /** Interrupt whatever program is currently running (Ctrl-C). */
+  async interrupt() {
+    await this._write(CTRL_C);
+  }
+
+  /**
+   * Soft-reset the board (same as pressing Ctrl-D at the friendly REPL
+   * prompt) - re-runs boot.py/main.py from scratch. Interrupts first so
+   * the Ctrl-D lands at an idle prompt rather than mid-program.
+   */
+  async softReset() {
+    await this._write(CTRL_C);
+    await new Promise((r) => setTimeout(r, 100));
+    await this._write(CTRL_D);
+  }
+
   /** Send raw bytes/text straight to the device (used by the interactive console). */
   async writeRaw(str) {
     await this._write(str);
