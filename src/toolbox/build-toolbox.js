@@ -152,6 +152,15 @@ const CUSTOM_CATEGORIES = {
       { kind: 'block', type: 'comm_i2c_scan' },
     ],
   },
+  python: {
+    kind: 'category',
+    name: 'Python',
+    colour: '240',
+    contents: [
+      { kind: 'block', type: 'python_exec' },
+      { kind: 'block', type: 'python_exec_value' },
+    ],
+  },
 };
 
 export function buildToolbox(board) {

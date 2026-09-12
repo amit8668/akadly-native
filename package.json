@@ -13,7 +13,9 @@
     "vite": "^8.2.2"
   },
   "dependencies": {
+    "@codemirror/lang-python": "^6.2.1",
     "@xterm/xterm": "^6.0.0",
-    "blockly": "^13.2.1"
+    "blockly": "^13.2.1",
+    "codemirror": "^6.0.2"
   }
 }

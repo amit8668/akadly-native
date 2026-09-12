@@ -6,5 +6,14 @@ export const stm32 = {
     '(the reference platform MicroPython was originally built for). No ' +
     'built-in WiFi hardware on standard boards.',
   pinout: '/pinouts/stm32.png',
-  categories: ['timing', 'gpio', 'displays', 'sensors', 'communication', 'files', 'control'],
+  categories: [
+    'timing',
+    'gpio',
+    'displays',
+    'sensors',
+    'communication',
+    'files',
+    'control',
+    'python',
+  ],
 };

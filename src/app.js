@@ -101,3 +101,7 @@ tabs.forEach((tab) => {
 
 createConsolePanel(panels.console, transport);
 const filesPanel = createFilesPanel(panels.files, transport);
+
+document.getElementById('loadGeneratedCodeBtn').addEventListener('click', () => {
+  filesPanel.loadCode(generatePython(workspace), 'workspace.py');
+});

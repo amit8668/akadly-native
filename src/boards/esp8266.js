@@ -15,5 +15,6 @@ export const esp8266 = {
     'files',
     'network',
     'control',
+    'python',
   ],
 };

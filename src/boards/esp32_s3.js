@@ -15,5 +15,6 @@ export const esp32s3 = {
     'files',
     'network',
     'control',
+    'python',
   ],
 };

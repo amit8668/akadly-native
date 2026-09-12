@@ -11,6 +11,7 @@ import './blocks/network.js';
 import './blocks/files.js';
 import './blocks/control.js';
 import './blocks/communication.js';
+import './blocks/python.js';
 import './generators/python/gpio.js';
 import './generators/python/timing.js';
 import './generators/python/sensors.js';
@@ -19,6 +20,7 @@ import './generators/python/network.js';
 import './generators/python/files.js';
 import './generators/python/control.js';
 import './generators/python/communication.js';
+import './generators/python/python.js';
 import { buildToolbox } from './toolbox/build-toolbox.js';
 
 Blockly.setLocale(En);

@@ -1,12 +1,16 @@
+import { EditorView, basicSetup } from 'codemirror';
+import { python } from '@codemirror/lang-python';
+
 export function createFilesPanel(container, transport) {
   container.innerHTML = `
     <div class="files-toolbar">
       <button id="filesRefresh">Refresh</button>
+      <button id="loadGeneratedCodeBtn">Open generated Python code</button>
     </div>
     <ul id="filesList" class="files-list"></ul>
     <div class="files-editor">
       <input id="fileNameInput" type="text" placeholder="filename.py" />
-      <textarea id="fileContentInput" placeholder="file contents..." rows="8"></textarea>
+      <div id="fileEditor" class="files-code-editor"></div>
       <button id="fileSaveBtn">Save to device</button>
     </div>
     <pre id="filesStatus" class="files-status"></pre>
@@ -15,7 +19,23 @@ export function createFilesPanel(container, transport) {
   const listEl = container.querySelector('#filesList');
   const statusEl = container.querySelector('#filesStatus');
   const nameInput = container.querySelector('#fileNameInput');
-  const contentInput = container.querySelector('#fileContentInput');
+  const editorEl = container.querySelector('#fileEditor');
+
+  const editor = new EditorView({
+    doc: '',
+    extensions: [basicSetup, python()],
+    parent: editorEl,
+  });
+
+  function getContent() {
+    return editor.state.doc.toString();
+  }
+
+  function setContent(text) {
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: text },
+    });
+  }
 
   function setStatus(text) {
     statusEl.textContent = text;
@@ -44,7 +64,7 @@ export function createFilesPanel(container, transport) {
           try {
             const content = await transport.readFile(filename);
             nameInput.value = filename;
-            contentInput.value = content;
+            setContent(content);
             setStatus(`Loaded ${filename}.`);
           } catch (err) {
             setStatus(`[error] ${err.message}`);
@@ -87,7 +107,7 @@ export function createFilesPanel(container, transport) {
     }
     setStatus(`Writing ${filename}...`);
     try {
-      await transport.writeFile(filename, contentInput.value);
+      await transport.writeFile(filename, getContent());
       setStatus(`Saved ${filename}.`);
       refresh();
     } catch (err) {
@@ -95,5 +115,14 @@ export function createFilesPanel(container, transport) {
     }
   });
 
-  return { refresh };
+  return {
+    refresh,
+    // Load the current workspace's generated code into the editor, so it can
+    // be reviewed, hand-edited, and saved to the device like any other file.
+    loadCode(code, filename) {
+      nameInput.value = filename;
+      setContent(code);
+      setStatus(`Loaded ${filename} from the current blocks.`);
+    },
+  };
 }

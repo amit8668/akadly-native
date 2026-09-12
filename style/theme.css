@@ -314,17 +314,32 @@ main {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 500px;
+  max-width: 700px;
 }
 
-.files-editor input,
-.files-editor textarea {
+.files-editor input {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border-strong);
   border-radius: 6px;
   padding: 8px;
   font-family: var(--mono);
+}
+
+.files-code-editor {
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.files-code-editor .cm-editor {
+  height: 320px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.files-code-editor .cm-scroller {
+  overflow: auto;
 }
 
 .files-editor button {
