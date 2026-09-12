@@ -226,4 +226,10 @@ export class SerialTransport {
     const { stderr } = await this.runCode(code);
     if (stderr) throw new Error(stderr);
   }
+
+  /** Execute a file already on the device, in place - not the current workspace's code. */
+  async runFile(filename) {
+    const code = `exec(open(${JSON.stringify(filename)}).read(), globals())`;
+    return this.runCode(code);
+  }
 }

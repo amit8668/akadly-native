@@ -6,6 +6,8 @@ export function createFilesPanel(container, transport) {
     <div class="files-toolbar">
       <button id="filesRefresh">Refresh</button>
       <button id="loadGeneratedCodeBtn">Open generated Python code</button>
+      <button id="fileUploadBtn">Upload from computer</button>
+      <input id="fileUploadInput" type="file" hidden />
     </div>
     <ul id="filesList" class="files-list"></ul>
     <div class="files-editor">
@@ -20,6 +22,7 @@ export function createFilesPanel(container, transport) {
   const statusEl = container.querySelector('#filesStatus');
   const nameInput = container.querySelector('#fileNameInput');
   const editorEl = container.querySelector('#fileEditor');
+  const uploadInput = container.querySelector('#fileUploadInput');
 
   const editor = new EditorView({
     doc: '',
@@ -41,11 +44,27 @@ export function createFilesPanel(container, transport) {
     statusEl.textContent = text;
   }
 
-  async function refresh() {
+  function requireConnected() {
     if (!transport.isConnected) {
       setStatus('Connect to a device first.');
-      return;
+      return false;
     }
+    return true;
+  }
+
+  /** Trigger a browser download of device file content, saved under its own filename. */
+  function downloadToComputer(filename, content) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function refresh() {
+    if (!requireConnected()) return;
     setStatus('Listing files...');
     try {
       const files = await transport.listFiles();
@@ -72,9 +91,40 @@ export function createFilesPanel(container, transport) {
         };
         li.appendChild(openBtn);
 
+        const runBtn = document.createElement('button');
+        runBtn.textContent = 'Run';
+        runBtn.onclick = async () => {
+          setStatus(`Running ${filename}...`);
+          try {
+            const { stdout, stderr } = await transport.runFile(filename);
+            setStatus(`--- running ${filename} ---\n${stdout}${stderr ? `\n[error]\n${stderr}` : ''}`);
+          } catch (err) {
+            setStatus(`[error] ${err.message}`);
+          }
+        };
+        li.appendChild(runBtn);
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Download';
+        downloadBtn.onclick = async () => {
+          setStatus(`Downloading ${filename}...`);
+          try {
+            const content = await transport.readFile(filename);
+            downloadToComputer(filename, content);
+            setStatus(`Downloaded ${filename}.`);
+          } catch (err) {
+            setStatus(`[error] ${err.message}`);
+          }
+        };
+        li.appendChild(downloadBtn);
+
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Delete';
         deleteBtn.onclick = async () => {
+          if (!confirm(`Delete ${filename} from the device?`)) {
+            setStatus(`Delete cancelled for ${filename}.`);
+            return;
+          }
           setStatus(`Deleting ${filename}...`);
           try {
             await transport.deleteFile(filename);
@@ -101,10 +151,7 @@ export function createFilesPanel(container, transport) {
       setStatus('Enter a filename first.');
       return;
     }
-    if (!transport.isConnected) {
-      setStatus('Connect to a device first.');
-      return;
-    }
+    if (!requireConnected()) return;
     setStatus(`Writing ${filename}...`);
     try {
       await transport.writeFile(filename, getContent());
@@ -113,6 +160,21 @@ export function createFilesPanel(container, transport) {
     } catch (err) {
       setStatus(`[error] ${err.message}`);
     }
+  });
+
+  // Upload from computer: pick a local file, load it into the editor for
+  // review, same as opening a device file - "Save to device" then writes it.
+  container.querySelector('#fileUploadBtn').addEventListener('click', () => {
+    uploadInput.click();
+  });
+  uploadInput.addEventListener('change', async () => {
+    const file = uploadInput.files[0];
+    if (!file) return;
+    const content = await file.text();
+    nameInput.value = file.name;
+    setContent(content);
+    setStatus(`Loaded ${file.name} from your computer - click "Save to device" to upload it.`);
+    uploadInput.value = '';
   });
 
   return {
