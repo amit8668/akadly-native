@@ -1,5 +1,10 @@
 import { EditorView, basicSetup } from 'codemirror';
 import { python } from '@codemirror/lang-python';
+import ssd1306Driver from '../drivers/ssd1306.py?raw';
+
+const DRIVERS = {
+  'ssd1306.py': ssd1306Driver,
+};
 
 export function createFilesPanel(container, transport) {
   container.innerHTML = `
@@ -8,6 +13,7 @@ export function createFilesPanel(container, transport) {
       <button id="loadGeneratedCodeBtn">Open generated Python code</button>
       <button id="fileUploadBtn">Upload from computer</button>
       <input id="fileUploadInput" type="file" hidden />
+      <button id="installSsd1306Btn">Install SSD1306 driver</button>
     </div>
     <ul id="filesList" class="files-list"></ul>
     <div class="files-editor">
@@ -175,6 +181,18 @@ export function createFilesPanel(container, transport) {
     setContent(content);
     setStatus(`Loaded ${file.name} from your computer - click "Save to device" to upload it.`);
     uploadInput.value = '';
+  });
+
+  container.querySelector('#installSsd1306Btn').addEventListener('click', async () => {
+    if (!requireConnected()) return;
+    setStatus('Installing ssd1306.py...');
+    try {
+      await transport.writeFile('ssd1306.py', DRIVERS['ssd1306.py']);
+      setStatus('Installed ssd1306.py. The OLED blocks should work now.');
+      refresh();
+    } catch (err) {
+      setStatus(`[error] ${err.message}`);
+    }
   });
 
   return {
