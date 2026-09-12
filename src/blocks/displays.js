@@ -3,8 +3,15 @@ import * as Blockly from 'blockly/core';
 Blockly.common.defineBlocksWithJsonArray([
   {
     type: 'display_oled_init',
-    message0: 'start OLED display %1 x %2 SCL pin %3 SDA pin %4',
+    message0: 'start OLED display %1 %2 x %3 SCL pin %4 SDA pin %5',
     args0: [
+      {
+        type: 'field_image',
+        src: '/media/oled.png',
+        width: 55,
+        height: 55,
+        alt: 'OLED display module',
+      },
       { type: 'input_value', name: 'WIDTH', check: 'Number' },
       { type: 'input_value', name: 'HEIGHT', check: 'Number' },
       { type: 'input_value', name: 'SCL', check: 'Number' },
@@ -12,7 +19,7 @@ Blockly.common.defineBlocksWithJsonArray([
     ],
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 135,
     tooltip: 'Set up an SSD1306 I2C OLED display.',
   },
   {
@@ -25,7 +32,7 @@ Blockly.common.defineBlocksWithJsonArray([
     ],
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 230,
     tooltip: 'Draw text into the OLED display buffer.',
   },
   {
@@ -38,7 +45,7 @@ Blockly.common.defineBlocksWithJsonArray([
     ],
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 230,
     tooltip:
       'Draw a number into the OLED display buffer - plug a Number directly in, no text conversion needed.',
   },
@@ -48,7 +55,7 @@ Blockly.common.defineBlocksWithJsonArray([
     args0: [{ type: 'input_value', name: 'VALUE', check: 'Number' }],
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 230,
     tooltip: 'Fill the whole display buffer with 0 (black) or 1 (white).',
   },
   {
@@ -56,7 +63,7 @@ Blockly.common.defineBlocksWithJsonArray([
     message0: 'OLED show',
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 230,
     tooltip: 'Push the buffer to the physical display.',
   },
   {
@@ -64,7 +71,7 @@ Blockly.common.defineBlocksWithJsonArray([
     message0: 'OLED clear',
     previousStatement: null,
     nextStatement: null,
-    colour: 285,
+    colour: 230,
     tooltip: 'Clear the display buffer (call OLED show to apply).',
   },
 ]);
