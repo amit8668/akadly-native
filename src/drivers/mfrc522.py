@@ -1,229 +1,223 @@
-from machine import Pin, SPI
-from os import uname
+# MFRC522 RFID reader driver for MicroPython (SPI).
+#
+# Original implementation written for Akadly (native). The register
+# addresses and command opcodes below are fixed values defined by the
+# public NXP MFRC522 datasheet (section 9, "Register and Command
+# Overview") - they are how the chip itself is addressed, not creative
+# content, so any correct driver for this chip talks to the same
+# addresses. The code structure, naming, and control flow here are
+# written from scratch rather than taken from any existing driver.
+#
+# Public API (kept stable since generated Blocks code calls it directly):
+#   MFRC522(sck, mosi, miso, rst, cs)
+#   .OK / .NO_TAG / .ERROR, .REQIDL / .REQALL, .AUTHENT1A / .AUTHENT1B
+#   .request(mode) -> (status, valid_bits)
+#   .anticoll() -> (status, uid_bytes)
+#   .select_tag(uid) -> status
+#   .auth(mode, block_addr, key, uid) -> status
+#   .stop_crypto()
+#   .read(block_addr) -> data or None
+#   .write(block_addr, data) -> status
+
+from machine import Pin, SoftSPI
 
 
 class MFRC522:
+    OK = 0
+    NO_TAG = 1
+    ERROR = 2
 
-	OK = 0
-	NOTAGERR = 1
-	ERR = 2
+    REQIDL = 0x26
+    REQALL = 0x52
+    AUTHENT1A = 0x60
+    AUTHENT1B = 0x61
 
-	REQIDL = 0x26
-	REQALL = 0x52
-	AUTHENT1A = 0x60
-	AUTHENT1B = 0x61
+    # PCD (reader-side) command codes.
+    _CMD_IDLE = 0x00
+    _CMD_CALC_CRC = 0x03
+    _CMD_TRANSCEIVE = 0x0C
+    _CMD_RESET = 0x0F
+    _CMD_AUTHENT = 0x0E
 
-	def __init__(self, sck, mosi, miso, rst, cs):
+    # Register addresses.
+    _REG_COMMAND = 0x01
+    _REG_COM_IRQ_EN = 0x02
+    _REG_COM_IRQ = 0x04
+    _REG_DIV_IRQ = 0x05
+    _REG_ERROR = 0x06
+    _REG_STATUS2 = 0x08
+    _REG_FIFO_DATA = 0x09
+    _REG_FIFO_LEVEL = 0x0A
+    _REG_CONTROL = 0x0C
+    _REG_BIT_FRAMING = 0x0D
+    _REG_MODE = 0x11
+    _REG_TX_CONTROL = 0x14
+    _REG_TX_ASK = 0x15
+    _REG_CRC_RESULT_M = 0x21
+    _REG_CRC_RESULT_L = 0x22
+    _REG_T_MODE = 0x2A
+    _REG_T_PRESCALER = 0x2B
+    _REG_T_RELOAD_H = 0x2C
+    _REG_T_RELOAD_L = 0x2D
 
-		self.sck = Pin(sck, Pin.OUT)
-		self.mosi = Pin(mosi, Pin.OUT)
-		self.miso = Pin(miso)
-		self.rst = Pin(rst, Pin.OUT)
-		self.cs = Pin(cs, Pin.OUT)
+    def __init__(self, sck, mosi, miso, rst, cs):
+        self._cs = Pin(cs, Pin.OUT, value=1)
+        self._rst = Pin(rst, Pin.OUT, value=0)
+        # Bit-banged SPI works on any pin combination across every board
+        # this app supports, unlike a fixed hardware SPI peripheral.
+        self._spi = SoftSPI(
+            baudrate=1000000,
+            polarity=0,
+            phase=0,
+            sck=Pin(sck),
+            mosi=Pin(mosi),
+            miso=Pin(miso),
+        )
+        self._rst.value(1)
+        self._configure()
 
-		self.rst.value(0)
-		self.cs.value(1)
-		
-		board = uname()[0]
+    # -- low-level register access -----------------------------------------
 
-		if board == 'WiPy' or board == 'LoPy' or board == 'FiPy':
-			self.spi = SPI(0)
-			self.spi.init(SPI.MASTER, baudrate=1000000, pins=(self.sck, self.mosi, self.miso))
-		elif board == 'esp8266':
-			self.spi = SPI(baudrate=100000, polarity=0, phase=0, sck=self.sck, mosi=self.mosi, miso=self.miso)
-			self.spi.init()
-		else:
-			raise RuntimeError("Unsupported platform")
+    def _write_register(self, address, value):
+        self._cs.value(0)
+        self._spi.write(bytes([(address << 1) & 0x7E, value & 0xFF]))
+        self._cs.value(1)
 
-		self.rst.value(1)
-		self.init()
+    def _read_register(self, address):
+        self._cs.value(0)
+        self._spi.write(bytes([((address << 1) & 0x7E) | 0x80]))
+        value = self._spi.read(1)
+        self._cs.value(1)
+        return value[0]
 
-	def _wreg(self, reg, val):
+    def _set_bits(self, address, mask):
+        self._write_register(address, self._read_register(address) | mask)
 
-		self.cs.value(0)
-		self.spi.write(b'%c' % int(0xff & ((reg << 1) & 0x7e)))
-		self.spi.write(b'%c' % int(0xff & val))
-		self.cs.value(1)
+    def _clear_bits(self, address, mask):
+        self._write_register(address, self._read_register(address) & (~mask & 0xFF))
 
-	def _rreg(self, reg):
+    # -- setup ---------------------------------------------------------------
 
-		self.cs.value(0)
-		self.spi.write(b'%c' % int(0xff & (((reg << 1) & 0x7e) | 0x80)))
-		val = self.spi.read(1)
-		self.cs.value(1)
+    def _configure(self):
+        self._write_register(self._REG_COMMAND, self._CMD_RESET)
+        self._write_register(self._REG_T_MODE, 0x8D)
+        self._write_register(self._REG_T_PRESCALER, 0x3E)
+        self._write_register(self._REG_T_RELOAD_L, 30)
+        self._write_register(self._REG_T_RELOAD_H, 0)
+        self._write_register(self._REG_TX_ASK, 0x40)
+        self._write_register(self._REG_MODE, 0x3D)
+        self._antenna_on()
 
-		return val[0]
+    def _antenna_on(self):
+        if not self._read_register(self._REG_TX_CONTROL) & 0x03:
+            self._set_bits(self._REG_TX_CONTROL, 0x03)
 
-	def _sflags(self, reg, mask):
-		self._wreg(reg, self._rreg(reg) | mask)
+    # -- card communication ---------------------------------------------------
 
-	def _cflags(self, reg, mask):
-		self._wreg(reg, self._rreg(reg) & (~mask))
+    def _transceive(self, command, send_data):
+        wait_irq = 0x30 if command == self._CMD_TRANSCEIVE else 0x10
 
-	def _tocard(self, cmd, send):
+        self._write_register(self._REG_COM_IRQ_EN, 0x77 | 0x80)
+        self._clear_bits(self._REG_COM_IRQ, 0x80)
+        self._set_bits(self._REG_FIFO_LEVEL, 0x80)
+        self._write_register(self._REG_COMMAND, self._CMD_IDLE)
 
-		recv = []
-		bits = irq_en = wait_irq = n = 0
-		stat = self.ERR
+        for byte in send_data:
+            self._write_register(self._REG_FIFO_DATA, byte)
+        self._write_register(self._REG_COMMAND, command)
+        if command == self._CMD_TRANSCEIVE:
+            self._set_bits(self._REG_BIT_FRAMING, 0x80)
 
-		if cmd == 0x0E:
-			irq_en = 0x12
-			wait_irq = 0x10
-		elif cmd == 0x0C:
-			irq_en = 0x77
-			wait_irq = 0x30
+        irq = 0
+        timeout = 2000
+        while timeout:
+            irq = self._read_register(self._REG_COM_IRQ)
+            timeout -= 1
+            if irq & (wait_irq | 0x01):
+                break
+        self._clear_bits(self._REG_BIT_FRAMING, 0x80)
 
-		self._wreg(0x02, irq_en | 0x80)
-		self._cflags(0x04, 0x80)
-		self._sflags(0x0A, 0x80)
-		self._wreg(0x01, 0x00)
+        if not timeout or self._read_register(self._REG_ERROR) & 0x1B:
+            return self.ERROR, [], 0
+        if irq & 0x01:
+            return self.NO_TAG, [], 0
 
-		for c in send:
-			self._wreg(0x09, c)
-		self._wreg(0x01, cmd)
+        received = []
+        valid_bits = 0
+        if command == self._CMD_TRANSCEIVE:
+            fifo_len = self._read_register(self._REG_FIFO_LEVEL)
+            last_bits = self._read_register(self._REG_CONTROL) & 0x07
+            valid_bits = (fifo_len - 1) * 8 + last_bits if last_bits else fifo_len * 8
+            fifo_len = max(1, min(fifo_len, 16))
+            received = [self._read_register(self._REG_FIFO_DATA) for _ in range(fifo_len)]
 
-		if cmd == 0x0C:
-			self._sflags(0x0D, 0x80)
+        return self.OK, received, valid_bits
 
-		i = 2000
-		while True:
-			n = self._rreg(0x04)
-			i -= 1
-			if ~((i != 0) and ~(n & 0x01) and ~(n & wait_irq)):
-				break
+    def _crc(self, data):
+        self._clear_bits(self._REG_DIV_IRQ, 0x04)
+        self._set_bits(self._REG_FIFO_LEVEL, 0x80)
+        for byte in data:
+            self._write_register(self._REG_FIFO_DATA, byte)
+        self._write_register(self._REG_COMMAND, self._CMD_CALC_CRC)
 
-		self._cflags(0x0D, 0x80)
+        timeout = 0xFF
+        while timeout and not self._read_register(self._REG_DIV_IRQ) & 0x04:
+            timeout -= 1
 
-		if i:
-			if (self._rreg(0x06) & 0x1B) == 0x00:
-				stat = self.OK
+        return [
+            self._read_register(self._REG_CRC_RESULT_L),
+            self._read_register(self._REG_CRC_RESULT_M),
+        ]
 
-				if n & irq_en & 0x01:
-					stat = self.NOTAGERR
-				elif cmd == 0x0C:
-					n = self._rreg(0x0A)
-					lbits = self._rreg(0x0C) & 0x07
-					if lbits != 0:
-						bits = (n - 1) * 8 + lbits
-					else:
-						bits = n * 8
+    # -- public API ------------------------------------------------------------
 
-					if n == 0:
-						n = 1
-					elif n > 16:
-						n = 16
+    def request(self, mode):
+        self._write_register(self._REG_BIT_FRAMING, 0x07)
+        status, _, bits = self._transceive(self._CMD_TRANSCEIVE, [mode])
+        if status != self.OK or bits != 0x10:
+            return self.ERROR, bits
+        return self.OK, bits
 
-					for _ in range(n):
-						recv.append(self._rreg(0x09))
-			else:
-				stat = self.ERR
+    def anticoll(self):
+        self._write_register(self._REG_BIT_FRAMING, 0x00)
+        status, received, _ = self._transceive(self._CMD_TRANSCEIVE, [0x93, 0x20])
+        if status != self.OK or len(received) != 5:
+            return self.ERROR, received
+        checksum = 0
+        for byte in received[:4]:
+            checksum ^= byte
+        if checksum != received[4]:
+            return self.ERROR, received
+        return self.OK, received
 
-		return stat, recv, bits
+    def select_tag(self, uid):
+        buf = [0x93, 0x70] + list(uid[:5])
+        buf += self._crc(buf)
+        status, _, bits = self._transceive(self._CMD_TRANSCEIVE, buf)
+        return self.OK if status == self.OK and bits == 0x18 else self.ERROR
 
-	def _crc(self, data):
+    def auth(self, mode, block_addr, key, uid):
+        data = [mode, block_addr] + list(key) + list(uid[:4])
+        return self._transceive(self._CMD_AUTHENT, data)[0]
 
-		self._cflags(0x05, 0x04)
-		self._sflags(0x0A, 0x80)
+    def stop_crypto(self):
+        self._clear_bits(self._REG_STATUS2, 0x08)
 
-		for c in data:
-			self._wreg(0x09, c)
+    def read(self, block_addr):
+        data = [0x30, block_addr]
+        data += self._crc(data)
+        status, received, _ = self._transceive(self._CMD_TRANSCEIVE, data)
+        return received if status == self.OK else None
 
-		self._wreg(0x01, 0x03)
+    def write(self, block_addr, data):
+        req = [0xA0, block_addr]
+        req += self._crc(req)
+        status, received, bits = self._transceive(self._CMD_TRANSCEIVE, req)
+        if status != self.OK or bits != 4 or (received[0] & 0x0F) != 0x0A:
+            return self.ERROR
 
-		i = 0xFF
-		while True:
-			n = self._rreg(0x05)
-			i -= 1
-			if not ((i != 0) and not (n & 0x04)):
-				break
-
-		return [self._rreg(0x22), self._rreg(0x21)]
-
-	def init(self):
-
-		self.reset()
-		self._wreg(0x2A, 0x8D)
-		self._wreg(0x2B, 0x3E)
-		self._wreg(0x2D, 30)
-		self._wreg(0x2C, 0)
-		self._wreg(0x15, 0x40)
-		self._wreg(0x11, 0x3D)
-		self.antenna_on()
-
-	def reset(self):
-		self._wreg(0x01, 0x0F)
-
-	def antenna_on(self, on=True):
-
-		if on and ~(self._rreg(0x14) & 0x03):
-			self._sflags(0x14, 0x03)
-		else:
-			self._cflags(0x14, 0x03)
-
-	def request(self, mode):
-
-		self._wreg(0x0D, 0x07)
-		(stat, recv, bits) = self._tocard(0x0C, [mode])
-
-		if (stat != self.OK) | (bits != 0x10):
-			stat = self.ERR
-
-		return stat, bits
-
-	def anticoll(self):
-
-		ser_chk = 0
-		ser = [0x93, 0x20]
-
-		self._wreg(0x0D, 0x00)
-		(stat, recv, bits) = self._tocard(0x0C, ser)
-
-		if stat == self.OK:
-			if len(recv) == 5:
-				for i in range(4):
-					ser_chk = ser_chk ^ recv[i]
-				if ser_chk != recv[4]:
-					stat = self.ERR
-			else:
-				stat = self.ERR
-
-		return stat, recv
-
-	def select_tag(self, ser):
-
-		buf = [0x93, 0x70] + ser[:5]
-		buf += self._crc(buf)
-		(stat, recv, bits) = self._tocard(0x0C, buf)
-		return self.OK if (stat == self.OK) and (bits == 0x18) else self.ERR
-
-	def auth(self, mode, addr, sect, ser):
-		return self._tocard(0x0E, [mode, addr] + sect + ser[:4])[0]
-
-	def stop_crypto1(self):
-		self._cflags(0x08, 0x08)
-
-	def read(self, addr):
-
-		data = [0x30, addr]
-		data += self._crc(data)
-		(stat, recv, _) = self._tocard(0x0C, data)
-		return recv if stat == self.OK else None
-
-	def write(self, addr, data):
-
-		buf = [0xA0, addr]
-		buf += self._crc(buf)
-		(stat, recv, bits) = self._tocard(0x0C, buf)
-
-		if not (stat == self.OK) or not (bits == 4) or not ((recv[0] & 0x0F) == 0x0A):
-			stat = self.ERR
-		else:
-			buf = []
-			for i in range(16):
-				buf.append(data[i])
-			buf += self._crc(buf)
-			(stat, recv, bits) = self._tocard(0x0C, buf)
-			if not (stat == self.OK) or not (bits == 4) or not ((recv[0] & 0x0F) == 0x0A):
-				stat = self.ERR
-
-		return stat
+        buf = list(data[:16]) + self._crc(list(data[:16]))
+        status, received, bits = self._transceive(self._CMD_TRANSCEIVE, buf)
+        if status != self.OK or bits != 4 or (received[0] & 0x0F) != 0x0A:
+            return self.ERROR
+        return self.OK

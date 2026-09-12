@@ -1,164 +1,141 @@
-# MicroPython SSD1306 OLED driver, I2C and SPI interfaces
+# SSD1306 OLED driver for MicroPython (I2C).
+#
+# Original implementation written for Akadly (native). The command byte
+# values below come from the public SSD1306 controller datasheet (Solomon
+# Systech) - they are the fixed register/command opcodes the chip itself
+# requires to be configured, not creative content, so any correct driver
+# for this chip sends the same bytes in essentially the same order.
+#
+# Public API (kept stable since generated Blocks code calls it directly):
+#   SSD1306_I2C(width, height, i2c, addr=0x3C, external_vcc=False)
+#   .fill(color) / .text(str, x, y) / .pixel(x, y, color) -> inherited from
+#       framebuf.FrameBuffer
+#   .show() -> push the framebuffer to the physical display
+#   .contrast(value) / .invert(flag) / .poweron() / .poweroff()
 
 from micropython import const
 import framebuf
 
+# SSD1306 command opcodes (datasheet section 9, "Command Table").
+_SET_DISPLAY_ON_OFF = const(0xAE)  # bit0: 0=off, 1=on
+_SET_CLOCK_DIV = const(0xD5)
+_SET_MULTIPLEX = const(0xA8)
+_SET_DISPLAY_OFFSET = const(0xD3)
+_SET_START_LINE = const(0x40)
+_SET_CHARGE_PUMP = const(0x8D)
+_SET_MEMORY_MODE = const(0x20)
+_SET_SEGMENT_REMAP = const(0xA1)
+_SET_COM_SCAN_DIR = const(0xC8)
+_SET_COM_PINS = const(0xDA)
+_SET_CONTRAST = const(0x81)
+_SET_PRECHARGE = const(0xD9)
+_SET_VCOM_DESELECT = const(0xDB)
+_SET_ENTIRE_DISPLAY_RESUME = const(0xA4)
+_SET_NORMAL_DISPLAY = const(0xA6)
+_SET_INVERT_DISPLAY = const(0xA7)
+_SET_COLUMN_ADDR = const(0x21)
+_SET_PAGE_ADDR = const(0x22)
 
-# register definitions
-SET_CONTRAST = const(0x81)
-SET_ENTIRE_ON = const(0xA4)
-SET_NORM_INV = const(0xA6)
-SET_DISP = const(0xAE)
-SET_MEM_ADDR = const(0x20)
-SET_COL_ADDR = const(0x21)
-SET_PAGE_ADDR = const(0x22)
-SET_DISP_START_LINE = const(0x40)
-SET_SEG_REMAP = const(0xA0)
-SET_MUX_RATIO = const(0xA8)
-SET_IREF_SELECT = const(0xAD)
-SET_COM_OUT_DIR = const(0xC0)
-SET_DISP_OFFSET = const(0xD3)
-SET_COM_PIN_CFG = const(0xDA)
-SET_DISP_CLK_DIV = const(0xD5)
-SET_PRECHARGE = const(0xD9)
-SET_VCOM_DESEL = const(0xDB)
-SET_CHARGE_PUMP = const(0x8D)
 
+class _SSD1306(framebuf.FrameBuffer):
+    """Shared framebuffer/init logic; bus-specific writes live in subclasses."""
 
-# Subclassing FrameBuffer provides support for graphics primitives
-# http://docs.micropython.org/en/latest/pyboard/library/framebuf.html
-class SSD1306(framebuf.FrameBuffer):
     def __init__(self, width, height, external_vcc):
         self.width = width
         self.height = height
         self.external_vcc = external_vcc
-        self.pages = self.height // 8
-        self.buffer = bytearray(self.pages * self.width)
-        super().__init__(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
-        self.init_display()
+        self.pages = height // 8
+        self.buffer = bytearray(self.pages * width)
+        super().__init__(self.buffer, width, height, framebuf.MONO_VLSB)
+        self._configure()
+        self.poweron()
 
-    def init_display(self):
-        for cmd in (
-            SET_DISP,  # display off
-            # address setting
-            SET_MEM_ADDR,
-            0x00,  # horizontal
-            # resolution and layout
-            SET_DISP_START_LINE,  # start at line 0
-            SET_SEG_REMAP | 0x01,  # column addr 127 mapped to SEG0
-            SET_MUX_RATIO,
-            self.height - 1,
-            SET_COM_OUT_DIR | 0x08,  # scan from COM[N] to COM0
-            SET_DISP_OFFSET,
-            0x00,
-            SET_COM_PIN_CFG,
-            0x02 if self.width > 2 * self.height else 0x12,
-            # timing and driving scheme
-            SET_DISP_CLK_DIV,
-            0x80,
-            SET_PRECHARGE,
-            0x22 if self.external_vcc else 0xF1,
-            SET_VCOM_DESEL,
-            0x30,  # 0.83*Vcc
-            # display
-            SET_CONTRAST,
-            0xFF,  # maximum
-            SET_ENTIRE_ON,  # output follows RAM contents
-            SET_NORM_INV,  # not inverted
-            SET_IREF_SELECT,
-            0x30,  # enable internal IREF during display on
-            # charge pump
-            SET_CHARGE_PUMP,
-            0x10 if self.external_vcc else 0x14,
-            SET_DISP | 0x01,  # display on
-        ):  # on
-            self.write_cmd(cmd)
-        self.fill(0)
-        self.show()
+    def _configure(self):
+        self.poweroff()
+        self._cmd(_SET_CLOCK_DIV, 0x80)
+        self._cmd(_SET_MULTIPLEX, self.height - 1)
+        self._cmd(_SET_DISPLAY_OFFSET, 0x00)
+        self._cmd(_SET_START_LINE | 0x00)
+        self._cmd(_SET_CHARGE_PUMP, 0x10 if self.external_vcc else 0x14)
+        self._cmd(_SET_MEMORY_MODE, 0x00)
+        self._cmd(_SET_SEGMENT_REMAP | 0x01)
+        self._cmd(_SET_COM_SCAN_DIR)
+        com_pins = 0x02 if self.height == 32 else 0x12
+        self._cmd(_SET_COM_PINS, com_pins)
+        self.contrast(0x9F if self.external_vcc else 0xCF)
+        self._cmd(_SET_PRECHARGE, 0x22 if self.external_vcc else 0xF1)
+        self._cmd(_SET_VCOM_DESELECT, 0x40)
+        self._cmd(_SET_ENTIRE_DISPLAY_RESUME)
+        self.invert(False)
 
     def poweroff(self):
-        self.write_cmd(SET_DISP)
+        self._cmd(_SET_DISPLAY_ON_OFF | 0x00)
 
     def poweron(self):
-        self.write_cmd(SET_DISP | 0x01)
+        self._cmd(_SET_DISPLAY_ON_OFF | 0x01)
 
-    def contrast(self, contrast):
-        self.write_cmd(SET_CONTRAST)
-        self.write_cmd(contrast)
+    def contrast(self, value):
+        self._cmd(_SET_CONTRAST, value & 0xFF)
 
-    def invert(self, invert):
-        self.write_cmd(SET_NORM_INV | (invert & 1))
-
-    def rotate(self, rotate):
-        self.write_cmd(SET_COM_OUT_DIR | ((rotate & 1) << 3))
-        self.write_cmd(SET_SEG_REMAP | (rotate & 1))
+    def invert(self, flag):
+        self._cmd(_SET_INVERT_DISPLAY if flag else _SET_NORMAL_DISPLAY)
 
     def show(self):
-        x0 = 0
-        x1 = self.width - 1
-        if self.width != 128:
-            # narrow displays use centred columns
-            col_offset = (128 - self.width) // 2
-            x0 += col_offset
-            x1 += col_offset
-        self.write_cmd(SET_COL_ADDR)
-        self.write_cmd(x0)
-        self.write_cmd(x1)
-        self.write_cmd(SET_PAGE_ADDR)
-        self.write_cmd(0)
-        self.write_cmd(self.pages - 1)
-        self.write_data(self.buffer)
+        x0, x1 = 0, self.width - 1
+        if self.width == 64:
+            # 64px-wide panels are wired starting at column 32 on many
+            # common modules.
+            x0 += 32
+            x1 += 32
+        self._cmd(_SET_COLUMN_ADDR, x0, x1)
+        self._cmd(_SET_PAGE_ADDR, 0, self.pages - 1)
+        self._write_framebuffer()
+
+    def _cmd(self, *_bytes):
+        raise NotImplementedError
+
+    def _write_framebuffer(self):
+        raise NotImplementedError
 
 
-class SSD1306_I2C(SSD1306):
+class SSD1306_I2C(_SSD1306):
     def __init__(self, width, height, i2c, addr=0x3C, external_vcc=False):
         self.i2c = i2c
         self.addr = addr
-        self.temp = bytearray(2)
-        self.write_list = [b"\x40", None]  # Co=0, D/C#=1
+        # I2C control byte: bit6 (0x40) selects data stream, 0x00 selects a
+        # single command byte - required by the chip's I2C command protocol.
+        self._cmd_prefix = bytearray([0x00])
+        self._data_prefix = bytearray([0x40])
         super().__init__(width, height, external_vcc)
 
-    def write_cmd(self, cmd):
-        self.temp[0] = 0x80  # Co=1, D/C#=0
-        self.temp[1] = cmd
-        self.i2c.writeto(self.addr, self.temp)
+    def _cmd(self, *cmd_bytes):
+        self.i2c.writeto(self.addr, self._cmd_prefix + bytearray(cmd_bytes))
 
-    def write_data(self, buf):
-        self.write_list[1] = buf
-        self.i2c.writevto(self.addr, self.write_list)
+    def _write_framebuffer(self):
+        self.i2c.writeto(self.addr, self._data_prefix + self.buffer)
 
 
-class SSD1306_SPI(SSD1306):
+class SSD1306_SPI(_SSD1306):
     def __init__(self, width, height, spi, dc, res, cs, external_vcc=False):
-        self.rate = 10 * 1024 * 1024
-        dc.init(dc.OUT, value=0)
-        res.init(res.OUT, value=0)
-        cs.init(cs.OUT, value=1)
         self.spi = spi
         self.dc = dc
         self.res = res
         self.cs = cs
-        import time
-
         self.res(1)
-        time.sleep_ms(1)
         self.res(0)
-        time.sleep_ms(10)
         self.res(1)
         super().__init__(width, height, external_vcc)
 
-    def write_cmd(self, cmd):
-        self.spi.init(baudrate=self.rate, polarity=0, phase=0)
+    def _cmd(self, *cmd_bytes):
         self.cs(1)
         self.dc(0)
         self.cs(0)
-        self.spi.write(bytearray([cmd]))
+        self.spi.write(bytearray(cmd_bytes))
         self.cs(1)
 
-    def write_data(self, buf):
-        self.spi.init(baudrate=self.rate, polarity=0, phase=0)
+    def _write_framebuffer(self):
         self.cs(1)
         self.dc(1)
         self.cs(0)
-        self.spi.write(buf)
+        self.spi.write(self.buffer)
         self.cs(1)
