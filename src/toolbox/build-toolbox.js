@@ -88,10 +88,81 @@ const CUSTOM_CATEGORIES = {
     name: 'Sensors',
     colour: '305',
     contents: [
-      { kind: 'block', type: 'sensor_dht_start' },
-      { kind: 'block', type: 'sensor_dht_measure' },
-      { kind: 'block', type: 'sensor_dht_temperature' },
-      { kind: 'block', type: 'sensor_dht_humidity' },
+      {
+        kind: 'category',
+        name: 'DHT11/22',
+        contents: [
+          { kind: 'block', type: 'sensor_dht_start' },
+          { kind: 'block', type: 'sensor_dht_measure' },
+          { kind: 'block', type: 'sensor_dht_temperature' },
+          { kind: 'block', type: 'sensor_dht_humidity' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Ultrasound (HC-SR04)',
+        contents: [
+          { kind: 'block', type: 'sensor_hcsr04_init' },
+          { kind: 'block', type: 'sensor_hcsr04_distance' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'OneWire (DS18B20)',
+        contents: [
+          { kind: 'block', type: 'sensor_ds18b20_init' },
+          { kind: 'block', type: 'sensor_ds18b20_scan' },
+          { kind: 'block', type: 'sensor_ds18b20_convert' },
+          { kind: 'block', type: 'sensor_ds18b20_read_temp' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Inertial Measurement (MPU6050)',
+        contents: [
+          { kind: 'button', text: 'Install MPU6050 driver', callbackkey: 'install_mpu6050' },
+          { kind: 'block', type: 'sensor_mpu6050_init' },
+          { kind: 'block', type: 'sensor_mpu6050_accel' },
+          { kind: 'block', type: 'sensor_mpu6050_gyro' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'RFID Reader (RC522)',
+        contents: [
+          { kind: 'button', text: 'Install RC522 driver', callbackkey: 'install_mfrc522' },
+          { kind: 'block', type: 'sensor_rfid_init' },
+          { kind: 'block', type: 'sensor_rfid_card_present' },
+          { kind: 'block', type: 'sensor_rfid_read_uid' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Rotary Encoder',
+        contents: [
+          { kind: 'block', type: 'sensor_encoder_init' },
+          { kind: 'block', type: 'sensor_encoder_position' },
+          { kind: 'block', type: 'sensor_encoder_reset' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Anemometer',
+        contents: [
+          { kind: 'block', type: 'sensor_anemometer_init' },
+          { kind: 'block', type: 'sensor_anemometer_count' },
+          { kind: 'block', type: 'sensor_anemometer_reset' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Rain Gauge',
+        contents: [
+          { kind: 'block', type: 'sensor_raingauge_init' },
+          { kind: 'block', type: 'sensor_raingauge_count' },
+          { kind: 'block', type: 'sensor_raingauge_reset' },
+        ],
+      },
     ],
   },
   displays: {
@@ -99,6 +170,7 @@ const CUSTOM_CATEGORIES = {
     name: 'Displays',
     colour: '285',
     contents: [
+      { kind: 'button', text: 'Install SSD1306 driver', callbackkey: 'install_ssd1306' },
       { kind: 'block', type: 'display_oled_init' },
       { kind: 'block', type: 'display_oled_text' },
       { kind: 'block', type: 'display_oled_write_value' },

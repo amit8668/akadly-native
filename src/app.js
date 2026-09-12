@@ -7,6 +7,9 @@ import { SerialTransport } from './transport/serial.js';
 import { createDevicePanel } from './panels/device.js';
 import { createConsolePanel } from './panels/console.js';
 import { createFilesPanel } from './panels/files.js';
+import ssd1306Driver from './drivers/ssd1306.py?raw';
+import mpu6050Driver from './drivers/mpu6050.py?raw';
+import mfrc522Driver from './drivers/mfrc522.py?raw';
 
 const workspaceEl = document.getElementById('workspace');
 const boardSelect = document.getElementById('boardSelect');
@@ -105,3 +108,18 @@ const filesPanel = createFilesPanel(panels.files, transport);
 document.getElementById('loadGeneratedCodeBtn').addEventListener('click', () => {
   filesPanel.loadCode(generatePython(workspace), 'workspace.py');
 });
+
+// --- Toolbox "Install X driver" buttons ---------------------------------
+// Registered per callbackkey used in toolbox/build-toolbox.js. Writes the
+// driver file straight to the connected device over the existing link.
+
+function registerDriverInstallButton(callbackkey, filename, source) {
+  workspace.registerButtonCallback(callbackkey, () => {
+    log(`\n[install] ${filename}...\n`);
+    filesPanel.installDriver(filename, source).then(() => log(`[install] ${filename} done\n`));
+  });
+}
+
+registerDriverInstallButton('install_ssd1306', 'ssd1306.py', ssd1306Driver);
+registerDriverInstallButton('install_mpu6050', 'mpu6050.py', mpu6050Driver);
+registerDriverInstallButton('install_mfrc522', 'mfrc522.py', mfrc522Driver);
