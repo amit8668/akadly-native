@@ -1,0 +1,24 @@
+Copyright (c) 2026 Amit Jadhawar. All rights reserved.
+
+This software and associated documentation files (the "Software") are the
+proprietary and confidential property of Amit Jadhawar. No license, express
+or implied, to use, copy, modify, merge, publish, distribute, sublicense,
+sell, or otherwise deal in the Software is granted to any person, except by
+separate written agreement with the copyright holder.
+
+Viewing this repository does not grant any rights to the Software beyond
+what applicable copyright law permits.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+---
+
+This project includes the following third-party open-source dependencies,
+each under its own license (see node_modules/<package>/LICENSE for full
+text); their inclusion does not affect the proprietary status of the
+original code in this repository:
+- Blockly (Apache License 2.0) - Google LLC
+- @xterm/xterm (MIT License)
+- Electron (MIT License), used only in the desktop build

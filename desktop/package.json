@@ -4,7 +4,8 @@
   "description": "Akadly (native) - fully original block/text MicroPython IDE, desktop edition",
   "main": "main.js",
   "author": "Amit Jadhawar",
-  "license": "MIT",
+  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win",
