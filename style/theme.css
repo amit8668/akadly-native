@@ -404,6 +404,16 @@ main {
   min-width: 0;
 }
 
+.files-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.files-editor-toolbar #fileNameInput {
+  flex: 1;
+}
+
 .files-editor input {
   background: var(--surface);
   color: var(--text);
@@ -431,7 +441,7 @@ main {
   overflow: auto;
 }
 
-.files-editor button {
+.files-editor > button {
   align-self: flex-start;
   background: var(--accent);
   color: var(--accent-contrast);

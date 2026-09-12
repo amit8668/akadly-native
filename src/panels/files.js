@@ -6,8 +6,6 @@ export function createFilesPanel(container, transport) {
     <div class="files-manager">
       <div class="files-header">
         <span>File manager</span>
-        <button id="fileUploadBtn" class="icon-button" title="Upload a file from your computer">Upload</button>
-        <input id="fileUploadInput" type="file" hidden />
       </div>
       <pre id="filesStatus" class="files-status"></pre>
 
@@ -30,7 +28,13 @@ export function createFilesPanel(container, transport) {
     </div>
 
     <div class="files-editor">
-      <input id="fileNameInput" type="text" placeholder="filename.py" />
+      <div class="files-editor-toolbar">
+        <button id="fileNewBtn" class="icon-button" title="Clear the editor and start a new file">New</button>
+        <button id="fileOpenBtn" class="icon-button" title="Open a file from your computer">Open File</button>
+        <input id="fileOpenInput" type="file" hidden />
+        <button id="fileSaveAsBtn" class="icon-button" title="Save the editor's contents to your computer">Save As</button>
+        <input id="fileNameInput" type="text" placeholder="filename.py" />
+      </div>
       <div id="fileEditor" class="files-code-editor"></div>
       <button id="fileSaveBtn">Save to device</button>
     </div>
@@ -40,7 +44,7 @@ export function createFilesPanel(container, transport) {
   const statusEl = container.querySelector('#filesStatus');
   const nameInput = container.querySelector('#fileNameInput');
   const editorEl = container.querySelector('#fileEditor');
-  const uploadInput = container.querySelector('#fileUploadInput');
+  const openInput = container.querySelector('#fileOpenInput');
 
   const editor = new EditorView({
     doc: '',
@@ -180,19 +184,32 @@ export function createFilesPanel(container, transport) {
     }
   });
 
-  // Upload from computer: pick a local file, load it into the editor for
-  // review, same as opening a device file - "Save to device" then writes it.
-  container.querySelector('#fileUploadBtn').addEventListener('click', () => {
-    uploadInput.click();
+  // --- New / Open / Save As: plain local-editor actions, independent of ---
+  // --- any device connection - same idea as a desktop IDE's File menu.  ---
+
+  container.querySelector('#fileNewBtn').addEventListener('click', () => {
+    nameInput.value = '';
+    setContent('');
+    setStatus('New file.');
   });
-  uploadInput.addEventListener('change', async () => {
-    const file = uploadInput.files[0];
+
+  container.querySelector('#fileOpenBtn').addEventListener('click', () => {
+    openInput.click();
+  });
+  openInput.addEventListener('change', async () => {
+    const file = openInput.files[0];
     if (!file) return;
     const content = await file.text();
     nameInput.value = file.name;
     setContent(content);
-    setStatus(`Loaded ${file.name} from your computer - click "Save to device" to upload it.`);
-    uploadInput.value = '';
+    setStatus(`Opened ${file.name} from your computer.`);
+    openInput.value = '';
+  });
+
+  container.querySelector('#fileSaveAsBtn').addEventListener('click', () => {
+    const filename = nameInput.value.trim() || 'untitled.py';
+    downloadToComputer(filename, getContent());
+    setStatus(`Saved ${filename} to your computer.`);
   });
 
   return {
