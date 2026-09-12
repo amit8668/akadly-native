@@ -269,15 +269,98 @@ main {
   overflow: auto;
 }
 
-.files-toolbar button {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border: none;
-  border-radius: 6px;
-  padding: 7px 16px;
+.files-manager {
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  max-width: 700px;
+}
+
+.files-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
   font-weight: 700;
+}
+
+.files-header span {
+  flex: 1;
+}
+
+.icon-button {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 4px 10px;
   font-family: var(--sans);
+  font-size: 12px;
   cursor: pointer;
+}
+
+.files-section {
+  border-top: 1px solid var(--border);
+  padding: 4px 14px;
+}
+
+.files-section:first-of-type {
+  border-top: none;
+}
+
+.files-section > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-2);
+  list-style: none;
+}
+
+.files-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.files-section > summary::before {
+  content: '\25B8';
+  font-size: 11px;
+}
+
+.files-section[open] > summary::before {
+  content: '\25BE';
+}
+
+.files-section > summary .icon-button {
+  margin-left: auto;
+}
+
+.files-section-body {
+  padding: 4px 0 10px;
+}
+
+.files-quick-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.files-quick-item:hover {
+  background: var(--surface-2);
+}
+
+.files-quick-badge {
+  color: var(--text-3);
+  font-size: 11px;
+  font-family: var(--sans);
 }
 
 .files-list {
