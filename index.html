@@ -40,11 +40,18 @@
     <main>
       <section class="panel active" id="panel-blocks">
         <div id="workspace"></div>
-        <aside>
-          <h2>Generated Python</h2>
-          <pre id="codePreview"></pre>
-          <h2>Output</h2>
-          <pre id="output"></pre>
+        <aside id="blocksAside">
+          <button id="asideToggle" title="Hide generated code and output">»</button>
+          <div id="asideContent">
+            <details open>
+              <summary>Generated Python</summary>
+              <pre id="codePreview"></pre>
+            </details>
+            <details open>
+              <summary>Output</summary>
+              <pre id="output"></pre>
+            </details>
+          </div>
         </aside>
       </section>
       <section class="panel" id="panel-console"></section>

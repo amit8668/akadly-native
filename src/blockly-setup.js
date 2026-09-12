@@ -41,3 +41,9 @@ export function generatePython(workspace) {
 export function setWorkspaceBoard(workspace, board) {
   workspace.updateToolbox(buildToolbox(board));
 }
+
+// Call after the workspace's container changes size (e.g. a sidebar was
+// collapsed/expanded) so Blockly's cached canvas size doesn't go stale.
+export function resizeWorkspace(workspace) {
+  Blockly.svgResize(workspace);
+}

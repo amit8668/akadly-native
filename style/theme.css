@@ -262,7 +262,7 @@ main {
   color: var(--accent);
 }
 
-#panel-files {
+#panel-files.active {
   display: grid;
   grid-template-columns: 18rem 1fr;
   align-items: stretch;
@@ -508,20 +508,71 @@ main {
 aside {
   flex: 1;
   display: flex;
-  flex-direction: column;
   background: var(--surface);
   border-left: 1px solid var(--border);
-  padding: 10px;
   overflow: hidden;
 }
 
-aside h2 {
+aside#blocksAside.collapsed {
+  flex: 0 0 auto;
+}
+
+aside#blocksAside.collapsed #asideContent {
+  display: none;
+}
+
+#asideToggle {
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 13px;
+  padding: 10px 6px;
+  cursor: pointer;
+  align-self: stretch;
+}
+
+#asideToggle:hover {
+  color: var(--accent);
+}
+
+#asideContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+#asideContent details {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+#asideContent details[open] {
+  flex: 1;
+}
+
+#asideContent details:not([open]) {
+  flex: 0 0 auto;
+}
+
+#asideContent summary {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--text-3);
   font-weight: 700;
   margin: 8px 0 4px;
+  cursor: pointer;
+  list-style: none;
+}
+
+#asideContent summary::-webkit-details-marker {
+  display: none;
 }
 
 pre {

@@ -1,7 +1,7 @@
 import '../style/theme.css';
 import './theme-toggle.js';
 import '@xterm/xterm/css/xterm.css';
-import { createWorkspace, generatePython, setWorkspaceBoard } from './blockly-setup.js';
+import { createWorkspace, generatePython, setWorkspaceBoard, resizeWorkspace } from './blockly-setup.js';
 import { boards, getBoard } from './boards/index.js';
 import { SerialTransport } from './transport/serial.js';
 import { createDevicePanel } from './panels/device.js';
@@ -34,6 +34,17 @@ boardSelect.addEventListener('change', () => {
   const board = getBoard(boardSelect.value);
   setWorkspaceBoard(workspace, board);
   devicePanel.setBoard(board);
+});
+
+// --- Collapse/expand the generated-code + output sidebar -----------------
+
+const blocksAside = document.getElementById('blocksAside');
+const asideToggle = document.getElementById('asideToggle');
+asideToggle.addEventListener('click', () => {
+  const collapsed = blocksAside.classList.toggle('collapsed');
+  asideToggle.textContent = collapsed ? '«' : '»';
+  asideToggle.title = collapsed ? 'Show generated code and output' : 'Hide generated code and output';
+  requestAnimationFrame(() => resizeWorkspace(workspace));
 });
 
 function log(text) {
