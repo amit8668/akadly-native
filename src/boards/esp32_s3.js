@@ -7,13 +7,13 @@ export const esp32s3 = {
     'for projects that need extra pins or USB peripherals.',
   pinout: '/pinouts/esp32.jpg',
   categories: [
-    'gpio',
     'timing',
-    'sensors',
+    'gpio',
     'displays',
-    'network',
-    'files',
-    'control',
+    'sensors',
     'communication',
+    'files',
+    'network',
+    'control',
   ],
 };

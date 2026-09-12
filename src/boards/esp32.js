@@ -8,13 +8,13 @@ export const esp32 = {
   pinout: '/pinouts/esp32.jpg',
   // Category ids this board's toolbox includes, in display order.
   categories: [
-    'gpio',
     'timing',
-    'sensors',
+    'gpio',
     'displays',
-    'network',
-    'files',
-    'control',
+    'sensors',
     'communication',
+    'files',
+    'network',
+    'control',
   ],
 };

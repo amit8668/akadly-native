@@ -7,13 +7,13 @@ export const esp8266 = {
     'good fit for simple WiFi-connected sensors.',
   pinout: '/pinouts/esp8266.jpg',
   categories: [
-    'gpio',
     'timing',
-    'sensors',
+    'gpio',
     'displays',
-    'network',
-    'files',
-    'control',
+    'sensors',
     'communication',
+    'files',
+    'network',
+    'control',
   ],
 };

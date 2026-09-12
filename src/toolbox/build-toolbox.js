@@ -101,6 +101,8 @@ const CUSTOM_CATEGORIES = {
     contents: [
       { kind: 'block', type: 'display_oled_init' },
       { kind: 'block', type: 'display_oled_text' },
+      { kind: 'block', type: 'display_oled_write_value' },
+      { kind: 'block', type: 'display_oled_fill' },
       { kind: 'block', type: 'display_oled_show' },
       { kind: 'block', type: 'display_oled_clear' },
     ],

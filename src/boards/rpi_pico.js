@@ -6,5 +6,5 @@ export const rpiPico = {
     'peripherals. The base Pico has no WiFi hardware (that\'s Pico W only), ' +
     'so the Network category is left out of its toolbox.',
   pinout: '/pinouts/rpi_pico.svg',
-  categories: ['gpio', 'timing', 'sensors', 'displays', 'files', 'control', 'communication'],
+  categories: ['timing', 'gpio', 'displays', 'sensors', 'communication', 'files', 'control'],
 };
