@@ -5,14 +5,12 @@ const ORDER_ATOMIC = pythonGenerator.ORDER_ATOMIC;
 pythonGenerator.forBlock['display_oled_init'] = function (block, generator) {
   generator.definitions_['import_ssd1306'] = 'import ssd1306';
   generator.definitions_['import_machine_display'] = 'import machine';
-  const width = generator.valueToCode(block, 'WIDTH', ORDER_ATOMIC) || '128';
-  const height = generator.valueToCode(block, 'HEIGHT', ORDER_ATOMIC) || '64';
+  const i2c = generator.valueToCode(block, 'I2C', ORDER_ATOMIC) || '0';
   const scl = generator.valueToCode(block, 'SCL', ORDER_ATOMIC) || '22';
   const sda = generator.valueToCode(block, 'SDA', ORDER_ATOMIC) || '21';
   generator.definitions_['oled_i2c'] =
-    `oled_i2c = machine.I2C(0, sda=machine.Pin(${sda}), scl=machine.Pin(${scl}))`;
-  generator.definitions_['oled'] =
-    `oled = ssd1306.SSD1306_I2C(${width}, ${height}, oled_i2c)`;
+    `oled_i2c = machine.I2C(${i2c}, scl=machine.Pin(${scl}), sda=machine.Pin(${sda}))`;
+  generator.definitions_['oled'] = 'oled = ssd1306.SSD1306_I2C(128, 64, oled_i2c)';
   return '';
 };
 
