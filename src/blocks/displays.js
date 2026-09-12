@@ -7,7 +7,7 @@ Blockly.common.defineBlocksWithJsonArray([
     args0: [
       {
         type: 'field_image',
-        src: '/media/oled.png',
+        src: '/media/oled.svg',
         width: 55,
         height: 55,
         alt: 'OLED display module',

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="55" height="55" role="img" aria-label="I2C SSD1306 OLED display module icon">
+  <rect x="3" y="3" width="49" height="49" rx="4" fill="#efe6da" stroke="#b5652f" stroke-width="1.5"/>
+  <rect x="8" y="8" width="39" height="24" rx="2" fill="#1c1a17"/>
+  <rect x="11" y="11" width="33" height="4" fill="#3a3632"/>
+  <rect x="11" y="17" width="24" height="3" fill="#3a3632"/>
+  <rect x="11" y="22" width="28" height="3" fill="#3a3632"/>
+  <g font-family="JetBrains Mono, monospace" font-size="5.4" fill="#6b6259" text-anchor="middle">
+    <circle cx="12" cy="40" r="1.6" fill="#b5652f"/>
+    <text x="12" y="47">VCC</text>
+    <circle cx="22" cy="40" r="1.6" fill="#b5652f"/>
+    <text x="22" y="47">GND</text>
+    <circle cx="33" cy="40" r="1.6" fill="#b5652f"/>
+    <text x="33" y="47">SCL</text>
+    <circle cx="44" cy="40" r="1.6" fill="#b5652f"/>
+    <text x="44" y="47">SDA</text>
+  </g>
+</svg>

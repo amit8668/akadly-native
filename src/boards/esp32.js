@@ -5,7 +5,7 @@ export const esp32 = {
     'A dual-core WiFi + Bluetooth microcontroller with plenty of GPIO, ' +
     'analog inputs, and PWM channels. A solid default choice for most ' +
     'MicroPython projects that need networking.',
-  pinout: '/pinouts/esp32.jpg',
+  pinout: '/pinouts/esp32.svg',
   // Category ids this board's toolbox includes, in display order.
   categories: [
     'timing',

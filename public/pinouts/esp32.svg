@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 458" width="680" height="458" role="img" aria-label="ESP32 DevKit pinout reference diagram">
+  <rect x="0" y="0" width="680" height="458" fill="#ffffff"/>
+  <text x="340" y="34" font-size="20" font-weight="700" fill="#2a2622" text-anchor="middle" font-family="Manrope, sans-serif">ESP32 DevKit</text>
+  <text x="340" y="54" font-size="12" fill="#6b6259" text-anchor="middle" font-family="Manrope, sans-serif">30-pin devkit, common layout</text>
+  <rect x="240" y="90" width="200" height="328" rx="10" fill="#efe6da" stroke="#b5652f" stroke-width="2"/>
+  <circle cx="256" cy="106" r="4" fill="#b5652f"/>
+  <text x="340" y="254" font-size="13" font-weight="700" fill="#b5652f" text-anchor="middle" font-family="Manrope, sans-serif">ESP32-WROOM-32</text>
+  
+    <line x1="240" y1="108" x2="194" y2="108" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="108" r="2.5" fill="#b5652f"/>
+    <text x="188" y="112" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">EN</text>
+    <line x1="240" y1="130" x2="194" y2="130" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="130" r="2.5" fill="#b5652f"/>
+    <text x="188" y="134" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO36 (VP)</text>
+    <line x1="240" y1="152" x2="194" y2="152" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="152" r="2.5" fill="#b5652f"/>
+    <text x="188" y="156" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO39 (VN)</text>
+    <line x1="240" y1="174" x2="194" y2="174" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="174" r="2.5" fill="#b5652f"/>
+    <text x="188" y="178" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO34</text>
+    <line x1="240" y1="196" x2="194" y2="196" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="196" r="2.5" fill="#b5652f"/>
+    <text x="188" y="200" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO35</text>
+    <line x1="240" y1="218" x2="194" y2="218" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="218" r="2.5" fill="#b5652f"/>
+    <text x="188" y="222" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO32</text>
+    <line x1="240" y1="240" x2="194" y2="240" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="240" r="2.5" fill="#b5652f"/>
+    <text x="188" y="244" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO33</text>
+    <line x1="240" y1="262" x2="194" y2="262" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="262" r="2.5" fill="#b5652f"/>
+    <text x="188" y="266" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO25</text>
+    <line x1="240" y1="284" x2="194" y2="284" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="284" r="2.5" fill="#b5652f"/>
+    <text x="188" y="288" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO26</text>
+    <line x1="240" y1="306" x2="194" y2="306" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="306" r="2.5" fill="#b5652f"/>
+    <text x="188" y="310" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO27</text>
+    <line x1="240" y1="328" x2="194" y2="328" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="328" r="2.5" fill="#b5652f"/>
+    <text x="188" y="332" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO14</text>
+    <line x1="240" y1="350" x2="194" y2="350" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="350" r="2.5" fill="#b5652f"/>
+    <text x="188" y="354" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO12</text>
+    <line x1="240" y1="372" x2="194" y2="372" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="372" r="2.5" fill="#b5652f"/>
+    <text x="188" y="376" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GND</text>
+    <line x1="240" y1="394" x2="194" y2="394" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="240" cy="394" r="2.5" fill="#b5652f"/>
+    <text x="188" y="398" font-size="12" fill="#2a2622" text-anchor="end" font-family="JetBrains Mono, monospace">GPIO13</text>
+  
+    <line x1="440" y1="108" x2="486" y2="108" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="108" r="2.5" fill="#b5652f"/>
+    <text x="492" y="112" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">VIN (5V)</text>
+    <line x1="440" y1="130" x2="486" y2="130" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="130" r="2.5" fill="#b5652f"/>
+    <text x="492" y="134" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GND</text>
+    <line x1="440" y1="152" x2="486" y2="152" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="152" r="2.5" fill="#b5652f"/>
+    <text x="492" y="156" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO23</text>
+    <line x1="440" y1="174" x2="486" y2="174" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="174" r="2.5" fill="#b5652f"/>
+    <text x="492" y="178" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO22</text>
+    <line x1="440" y1="196" x2="486" y2="196" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="196" r="2.5" fill="#b5652f"/>
+    <text x="492" y="200" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">TX0 (GPIO1)</text>
+    <line x1="440" y1="218" x2="486" y2="218" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="218" r="2.5" fill="#b5652f"/>
+    <text x="492" y="222" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">RX0 (GPIO3)</text>
+    <line x1="440" y1="240" x2="486" y2="240" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="240" r="2.5" fill="#b5652f"/>
+    <text x="492" y="244" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO21</text>
+    <line x1="440" y1="262" x2="486" y2="262" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="262" r="2.5" fill="#b5652f"/>
+    <text x="492" y="266" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GND</text>
+    <line x1="440" y1="284" x2="486" y2="284" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="284" r="2.5" fill="#b5652f"/>
+    <text x="492" y="288" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO19</text>
+    <line x1="440" y1="306" x2="486" y2="306" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="306" r="2.5" fill="#b5652f"/>
+    <text x="492" y="310" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO18</text>
+    <line x1="440" y1="328" x2="486" y2="328" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="328" r="2.5" fill="#b5652f"/>
+    <text x="492" y="332" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO5</text>
+    <line x1="440" y1="350" x2="486" y2="350" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="350" r="2.5" fill="#b5652f"/>
+    <text x="492" y="354" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO17</text>
+    <line x1="440" y1="372" x2="486" y2="372" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="372" r="2.5" fill="#b5652f"/>
+    <text x="492" y="376" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO16</text>
+    <line x1="440" y1="394" x2="486" y2="394" stroke="#b5652f" stroke-width="2"/>
+    <circle cx="440" cy="394" r="2.5" fill="#b5652f"/>
+    <text x="492" y="398" font-size="12" fill="#2a2622" text-anchor="start" font-family="JetBrains Mono, monospace">GPIO4</text>
+  <text x="340" y="444" font-size="10" fill="#6b6259" text-anchor="middle" font-family="Manrope, sans-serif">Simplified reference - verify against your specific board revision before wiring.</text>
+</svg>
