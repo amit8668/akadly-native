@@ -5,7 +5,7 @@ export const esp32s3 = {
     'A dual-core WiFi + Bluetooth LE microcontroller with more GPIO, more ' +
     'RAM, and native USB compared to the original ESP32 - a good choice ' +
     'for projects that need extra pins or USB peripherals.',
-  pinout: '/pinouts/esp32.jpg',
+  pinout: '/pinouts/esp32s3.jpg',
   categories: [
     'timing',
     'gpio',
