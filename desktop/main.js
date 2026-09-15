@@ -3,109 +3,135 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 
-// Unlike a plain static site, this project is a Vite app: its source uses
-// bare module imports (e.g. "blockly/core") that only resolve through
-// Vite's bundler. So the desktop app always serves the *built* output
-// (dist/), not raw source - run `npm run build` in the project root before
-// packaging or running this in dev.
-const APP_ROOT = app.isPackaged
+const CHANNEL_OPEN = 'device-picker:open';
+const CHANNEL_CHOICE = 'device-picker:choice';
+
+const MAIN_WINDOW_SIZE = { width: 1400, height: 900 };
+const PICKER_WINDOW_SIZE = { width: 480, height: 360 };
+
+// This project is a Vite app: its source uses bare module imports (e.g.
+// "blockly/core") that only resolve through Vite's own bundler, so the
+// desktop shell always serves the *built* dist/ output, never raw src/ -
+// run `npm run build` before packaging or launching this.
+const staticRoot = app.isPackaged
   ? path.join(process.resourcesPath, 'app')
   : path.join(__dirname, '..', 'dist');
 
-const MIME_TYPES = {
-  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-  '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
-  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
-  '.ico': 'image/x-icon', '.py': 'text/plain', '.xml': 'application/xml',
-  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
-  '.wasm': 'application/wasm', '.map': 'application/json',
-};
+const contentTypeByExt = new Map([
+  ['.html', 'text/html'],
+  ['.js', 'text/javascript'],
+  ['.css', 'text/css'],
+  ['.json', 'application/json'],
+  ['.png', 'image/png'],
+  ['.svg', 'image/svg+xml'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.gif', 'image/gif'],
+  ['.ico', 'image/x-icon'],
+  ['.py', 'text/plain'],
+  ['.xml', 'application/xml'],
+  ['.woff', 'font/woff'],
+  ['.woff2', 'font/woff2'],
+  ['.ttf', 'font/ttf'],
+  ['.wasm', 'application/wasm'],
+  ['.map', 'application/json'],
+]);
 
-// Serve over http://localhost instead of file:// - same reason as the
-// Akadly (BIPES-fork) desktop app: file:// blocks cross-origin fetch of
-// local files under Chromium, and the OTA/Remote Access iframes and the
-// editor's own asset loading both rely on normal fetch()/XHR.
-function startLocalServer() {
+function resolveRequestedFile(requestUrl) {
+  const urlPath = decodeURIComponent(requestUrl.split('?')[0]);
+  const relative = urlPath === '/' ? '/index.html' : urlPath;
+  return path.normalize(path.join(staticRoot, relative));
+}
+
+// Served over http://localhost rather than file:// - under Chromium,
+// file:// blocks cross-origin fetch() of local files, and both the
+// OTA/Remote-Access iframes and the editor's own asset loading need
+// ordinary fetch()/XHR to work.
+function launchStaticServer() {
   return new Promise((resolve, reject) => {
-    if (!fs.existsSync(path.join(APP_ROOT, 'index.html'))) {
-      reject(new Error(
-        `No build found at ${APP_ROOT}. Run "npm run build" in the project root first.`
-      ));
+    if (!fs.existsSync(path.join(staticRoot, 'index.html'))) {
+      reject(new Error(`No build found at ${staticRoot} - run "npm run build" first.`));
       return;
     }
-    const server = http.createServer((req, res) => {
-      let reqPath = decodeURIComponent(req.url.split('?')[0]);
-      if (reqPath === '/') reqPath = '/index.html';
-      const filePath = path.normalize(path.join(APP_ROOT, reqPath));
-      if (!filePath.startsWith(APP_ROOT)) {
-        res.writeHead(403);
-        res.end('Forbidden');
+
+    const server = http.createServer((request, response) => {
+      const filePath = resolveRequestedFile(request.url);
+      if (!filePath.startsWith(staticRoot)) {
+        response.writeHead(403);
+        response.end('Forbidden');
         return;
       }
-      fs.readFile(filePath, (err, data) => {
+
+      fs.readFile(filePath, (err, contents) => {
         if (err) {
-          res.writeHead(404);
-          res.end('Not found');
+          response.writeHead(404);
+          response.end('Not found');
           return;
         }
         const ext = path.extname(filePath).toLowerCase();
-        res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' });
-        res.end(data);
+        const contentType = contentTypeByExt.get(ext) || 'application/octet-stream';
+        response.writeHead(200, { 'Content-Type': contentType });
+        response.end(contents);
       });
     });
-    server.listen(0, '127.0.0.1', () => resolve(server));
+
     server.on('error', reject);
+    server.listen(0, '127.0.0.1', () => resolve(server));
   });
 }
 
-let pickerWindow = null;
-let pickerResolve = null;
+class DevicePickerManager {
+  constructor() {
+    this.window = null;
+    this.pendingChoice = null;
 
-function openPicker(title, items) {
-  return new Promise((resolve) => {
-    pickerResolve = resolve;
-    pickerWindow = new BrowserWindow({
-      width: 480,
-      height: 360,
-      parent: BrowserWindow.getFocusedWindow() || undefined,
-      modal: true,
-      resizable: false,
-      minimizable: false,
-      maximizable: false,
-      title,
-      webPreferences: {
-        preload: path.join(__dirname, 'picker-preload.js'),
-        contextIsolation: true,
-        nodeIntegration: false,
-      },
+    ipcMain.on(CHANNEL_CHOICE, (_event, deviceId) => {
+      this._settle(deviceId);
+      if (this.window) this.window.close();
     });
-    pickerWindow.setMenuBarVisibility(false);
-    pickerWindow.loadFile(path.join(__dirname, 'picker.html'));
-    pickerWindow.webContents.once('did-finish-load', () => {
-      pickerWindow.webContents.send('picker-init', { title, items });
-    });
-    pickerWindow.on('closed', () => {
-      pickerWindow = null;
-      if (pickerResolve) {
-        pickerResolve(null);
-        pickerResolve = null;
-      }
-    });
-  });
-}
-
-ipcMain.on('picker-selected', (event, id) => {
-  if (pickerResolve) {
-    pickerResolve(id);
-    pickerResolve = null;
   }
-  if (pickerWindow) pickerWindow.close();
-});
 
-function createWindow(serverPort) {
+  _settle(deviceId) {
+    if (!this.pendingChoice) return;
+    const resolve = this.pendingChoice;
+    this.pendingChoice = null;
+    resolve(deviceId);
+  }
+
+  ask(title, items) {
+    return new Promise((resolve) => {
+      this.pendingChoice = resolve;
+
+      this.window = new BrowserWindow({
+        ...PICKER_WINDOW_SIZE,
+        title,
+        parent: BrowserWindow.getFocusedWindow() || undefined,
+        modal: true,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        webPreferences: {
+          preload: path.join(__dirname, 'picker-preload.js'),
+          contextIsolation: true,
+          nodeIntegration: false,
+        },
+      });
+      this.window.setMenuBarVisibility(false);
+      this.window.loadFile(path.join(__dirname, 'picker.html'));
+      this.window.webContents.once('did-finish-load', () => {
+        this.window.webContents.send(CHANNEL_OPEN, { title, items });
+      });
+      this.window.on('closed', () => {
+        this.window = null;
+        this._settle(null);
+      });
+    });
+  }
+}
+
+function buildMainWindow(port) {
   const win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    ...MAIN_WINDOW_SIZE,
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
@@ -113,68 +139,67 @@ function createWindow(serverPort) {
       sandbox: true,
     },
   });
-  win.loadURL(`http://127.0.0.1:${serverPort}/index.html`);
+  win.loadURL(`http://127.0.0.1:${port}/index.html`);
   return win;
+}
+
+function describePort(port) {
+  const parts = [port.displayName || port.portName || port.portId];
+  if (port.vendorId) parts.push(`(VID:${port.vendorId} PID:${port.productId})`);
+  return parts.join(' ');
+}
+
+async function pickFromList(picker, title, list, toItem) {
+  if (list.length === 0) return '';
+  if (list.length === 1) return toItem(list[0]).id;
+  const items = list.map(toItem);
+  const chosen = await picker.ask(title, items);
+  return chosen || '';
 }
 
 app.whenReady().then(async () => {
   let server;
   try {
-    server = await startLocalServer();
+    server = await launchStaticServer();
   } catch (err) {
     console.error(err.message);
     app.quit();
     return;
   }
   const port = server.address().port;
-
+  const picker = new DevicePickerManager();
   const ses = session.defaultSession;
 
-  ses.on('select-serial-port', async (event, portList, webContents, callback) => {
+  ses.on('select-serial-port', async (event, portList, _webContents, callback) => {
     event.preventDefault();
-    if (portList.length === 0) {
-      callback('');
-      return;
-    }
-    if (portList.length === 1) {
-      callback(portList[0].portId);
-      return;
-    }
-    const items = portList.map((p) => ({
+    const choice = await pickFromList(picker, 'Select a serial port', portList, (p) => ({
       id: p.portId,
-      label: `${p.displayName || p.portName || p.portId}${p.vendorId ? ` (VID:${p.vendorId} PID:${p.productId})` : ''}`,
+      label: describePort(p),
     }));
-    const chosen = await openPicker('Select a serial port', items);
-    callback(chosen || '');
+    callback(choice);
   });
 
   ses.on('select-bluetooth-device', async (event, deviceList, callback) => {
     event.preventDefault();
-    if (deviceList.length === 0) {
-      callback('');
-      return;
-    }
-    if (deviceList.length === 1) {
-      callback(deviceList[0].deviceId);
-      return;
-    }
-    const items = deviceList.map((d) => ({ id: d.deviceId, label: d.deviceName || d.deviceId }));
-    const chosen = await openPicker('Select a Bluetooth device', items);
-    callback(chosen || '');
+    const choice = await pickFromList(picker, 'Select a Bluetooth device', deviceList, (d) => ({
+      id: d.deviceId,
+      label: d.deviceName || d.deviceId,
+    }));
+    callback(choice);
   });
 
-  ses.setPermissionCheckHandler((_webContents, permission) => {
-    return permission === 'serial' || permission === 'bluetooth';
-  });
+  ses.setPermissionCheckHandler((_webContents, permission) =>
+    permission === 'serial' || permission === 'bluetooth'
+  );
 
-  ses.setDevicePermissionHandler((details) => {
-    return details.deviceType === 'serial' || details.deviceType === 'bluetooth';
-  });
+  ses.setDevicePermissionHandler((details) =>
+    details.deviceType === 'serial' || details.deviceType === 'bluetooth'
+  );
 
-  createWindow(port);
+  buildMainWindow(port);
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow(port);
+    if (BrowserWindow.getAllWindows().length === 0) buildMainWindow(port);
   });
 });
 

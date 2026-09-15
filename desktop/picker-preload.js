@@ -1,7 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('picker', {
-  onInit: (callback) => ipcRenderer.on('picker-init', (_event, data) => callback(data)),
-  select: (id) => ipcRenderer.send('picker-selected', id),
-  cancel: () => ipcRenderer.send('picker-selected', null),
+const CHANNEL_OPEN = 'device-picker:open';
+const CHANNEL_CHOICE = 'device-picker:choice';
+
+contextBridge.exposeInMainWorld('devicePicker', {
+  onOpen(handler) {
+    ipcRenderer.on(CHANNEL_OPEN, (_event, payload) => handler(payload));
+  },
+  choose(deviceId) {
+    ipcRenderer.send(CHANNEL_CHOICE, deviceId);
+  },
+  dismiss() {
+    ipcRenderer.send(CHANNEL_CHOICE, null);
+  },
 });
