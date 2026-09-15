@@ -33,6 +33,7 @@ export function createFilesPanel(container, transport) {
         <button id="fileOpenBtn" class="icon-button" title="Open a file from your computer">Open File</button>
         <input id="fileOpenInput" type="file" hidden />
         <button id="fileSaveAsBtn" class="icon-button" title="Save the editor's contents to your computer">Save As</button>
+        <button id="fileCheckBtn" class="icon-button" title="Compile-check this code on the device without running it">Check Syntax</button>
         <input id="fileNameInput" type="text" placeholder="filename.py" />
       </div>
       <div id="fileEditor" class="files-code-editor"></div>
@@ -210,6 +211,25 @@ export function createFilesPanel(container, transport) {
     const filename = nameInput.value.trim() || 'untitled.py';
     downloadToComputer(filename, getContent());
     setStatus(`Saved ${filename} to your computer.`);
+  });
+
+  container.querySelector('#fileCheckBtn').addEventListener('click', async () => {
+    if (!requireConnected()) return;
+    const filename = nameInput.value.trim() || 'untitled.py';
+    const code = getContent();
+    if (!code.trim()) {
+      setStatus('Nothing to check - the editor is empty.');
+      return;
+    }
+    setStatus('Checking syntax...');
+    try {
+      const result = await transport.checkSyntax(code, filename);
+      setStatus(result.ok
+        ? `${filename} compiles with no syntax errors.`
+        : `[syntax error] ${result.message}`);
+    } catch (err) {
+      setStatus(`[error] ${err.message}`);
+    }
   });
 
   return {

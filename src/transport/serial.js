@@ -232,4 +232,26 @@ export class SerialTransport {
     const code = `exec(open(${JSON.stringify(filename)}).read(), globals())`;
     return this.runCode(code);
   }
+
+  /**
+   * Compile-check a program on the device's own MicroPython compiler
+   * without executing it - lets a student catch syntax errors before
+   * running code that might drive hardware or block on a sensor loop.
+   */
+  async checkSyntax(source, label = '<check>') {
+    const probe =
+      `try:\n` +
+      `    compile(${JSON.stringify(source)}, ${JSON.stringify(label)}, 'exec')\n` +
+      `    print('SYNTAX_OK')\n` +
+      `except Exception as e:\n` +
+      `    print('SYNTAX_ERROR:' + str(e))\n`;
+    const { stdout, stderr } = await this.runCode(probe);
+    if (stderr) throw new Error(stderr);
+    const result = stdout.trim();
+    if (result.startsWith('SYNTAX_OK')) return { ok: true };
+    if (result.startsWith('SYNTAX_ERROR:')) {
+      return { ok: false, message: result.slice('SYNTAX_ERROR:'.length).trim() };
+    }
+    return { ok: false, message: result || 'No response from device.' };
+  }
 }
